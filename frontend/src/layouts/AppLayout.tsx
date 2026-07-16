@@ -255,7 +255,11 @@ export default function AppLayout() {
               '&:hover': { bgcolor: 'action.hover' },
             }}
           >
-            <Avatar sx={{ width: 34, height: 34, bgcolor: 'primary.main', fontSize: 14 }}>
+            <Avatar
+              src={`https://ui-avatars.com/api/?name=${encodeURIComponent(user?.full_name || 'User')}&background=1a4f8c&color=fff&size=128`}
+              alt={user?.full_name || 'User'}
+              sx={{ width: 34, height: 34, bgcolor: 'primary.main', fontSize: 14 }}
+            >
               {(user?.full_name || 'U')
                 .split(' ')
                 .map((p) => p[0])
