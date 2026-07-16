@@ -1,6 +1,5 @@
-import { AppBar, Button, Container, Toolbar, Typography } from '@mui/material';
+import { AppBar, Box, Button, Container, Toolbar, Typography } from '@mui/material';
 import { Link as RouterLink, useLocation } from 'react-router-dom';
-import LocalHospitalIcon from '@mui/icons-material/LocalHospital';
 
 export default function Header() {
   const location = useLocation();
@@ -11,34 +10,75 @@ export default function Header() {
       position="sticky"
       elevation={0}
       sx={{
-        bgcolor: 'white',
+        bgcolor: 'rgba(255,255,255,0.92)',
         color: 'text.primary',
         borderBottom: '1px solid',
         borderColor: 'divider',
       }}
     >
       <Container maxWidth="lg">
-        <Toolbar disableGutters sx={{ py: 1 }}>
-          <LocalHospitalIcon sx={{ color: 'primary.main', mr: 1.5, fontSize: 32 }} />
-          <Typography
+        <Toolbar disableGutters sx={{ py: 1.25, gap: 1 }}>
+          <Box
             component={RouterLink}
             to="/"
-            variant="h6"
             sx={{
-              flexGrow: 1,
-              fontWeight: 700,
-              color: 'primary.main',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 1.25,
               textDecoration: 'none',
+              color: 'inherit',
+              flexGrow: 1,
             }}
           >
-            LongCare CDSS
-          </Typography>
+            <Box
+              component="img"
+              src="/favicon.svg"
+              alt=""
+              sx={{ width: 36, height: 36 }}
+            />
+            <Box>
+              <Typography
+                variant="h6"
+                sx={{
+                  fontFamily: '"Source Serif 4", Georgia, serif',
+                  fontWeight: 650,
+                  color: 'primary.main',
+                  lineHeight: 1.1,
+                  fontSize: '1.25rem',
+                }}
+              >
+                LongCare
+              </Typography>
+              <Typography
+                variant="caption"
+                sx={{
+                  color: 'text.secondary',
+                  letterSpacing: '0.06em',
+                  textTransform: 'uppercase',
+                  fontSize: '0.65rem',
+                }}
+              >
+                Clinical Decision Support
+              </Typography>
+            </Box>
+          </Box>
+
           {!isApp ? (
             <>
-              <Button component={RouterLink} to="/#considerations" color="inherit" sx={{ mr: 1 }}>
+              <Button
+                component={RouterLink}
+                to="/#considerations"
+                color="inherit"
+                sx={{ display: { xs: 'none', sm: 'inline-flex' } }}
+              >
                 Evaluation
               </Button>
-              <Button component={RouterLink} to="/#categories" color="inherit" sx={{ mr: 2 }}>
+              <Button
+                component={RouterLink}
+                to="/#categories"
+                color="inherit"
+                sx={{ display: { xs: 'none', md: 'inline-flex' }, mr: 1 }}
+              >
                 AI Categories
               </Button>
               <Button component={RouterLink} to="/app/login" variant="contained" color="primary">
