@@ -1,11 +1,13 @@
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 
 from app.api import auth, chat, diagnosis, documentation, images, patient, treatment
 from app.config import settings
 from app.database.session import init_db
+from app.llm.gateway import LLMError
 from app.rag.ingest import ingest_guidelines
 from app.seed import seed_database
 
@@ -36,6 +38,12 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+
+@app.exception_handler(LLMError)
+async def llm_error_handler(_: Request, exc: LLMError):
+    return JSONResponse(status_code=502, content={"detail": str(exc)})
+
+
 app.include_router(auth.router, prefix="/api/v1")
 app.include_router(patient.router, prefix="/api/v1")
 app.include_router(diagnosis.router, prefix="/api/v1")
@@ -51,6 +59,7 @@ async def health():
         "status": "healthy",
         "service": "longcare-cdss",
         "llm_provider": settings.llm_provider,
+        "openrouter_configured": settings.use_openrouter,
         "vector_backend": settings.vector_backend,
     }
 

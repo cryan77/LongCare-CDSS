@@ -1,24 +1,32 @@
-from pydantic_settings import BaseSettings
+from pathlib import Path
+
+from pydantic_settings import BaseSettings, SettingsConfigDict
+
+_ENV_FILE = Path(__file__).resolve().parent.parent / ".env"
 
 
 class Settings(BaseSettings):
+    model_config = SettingsConfigDict(
+        env_file=str(_ENV_FILE),
+        env_file_encoding="utf-8",
+        extra="ignore",
+    )
+
     database_url: str = "sqlite+aiosqlite:///./longcare.db"
     secret_key: str = "dev-secret-key-change-in-production"
     algorithm: str = "HS256"
     access_token_expire_minutes: int = 60 * 24
 
-    # AI provider: mock | openrouter
-    llm_provider: str = "mock"
+    # AI provider: openrouter | mock
+    llm_provider: str = "openrouter"
     openrouter_api_key: str = ""
     openrouter_base_url: str = "https://openrouter.ai/api/v1"
     openrouter_model: str = "openai/gpt-4o-mini"
     openrouter_vision_model: str = "openai/gpt-4o"
     openrouter_embedding_model: str = "openai/text-embedding-3-small"
 
-    # Legacy alias (ignored if openrouter set)
     openai_api_key: str = ""
 
-    # Vector store: memory | qdrant
     vector_backend: str = "memory"
     qdrant_url: str = "http://localhost:6333"
     qdrant_collection: str = "guidelines"
@@ -31,10 +39,7 @@ class Settings(BaseSettings):
 
     @property
     def use_openrouter(self) -> bool:
-        return self.llm_provider == "openrouter" and bool(self.openrouter_api_key)
-
-    class Config:
-        env_file = ".env"
+        return self.llm_provider.lower() != "mock" and bool(self.openrouter_api_key.strip())
 
 
 settings = Settings()

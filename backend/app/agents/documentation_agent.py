@@ -1,14 +1,50 @@
 from __future__ import annotations
 
+import json
 from typing import Any
 
+from app.config import settings
+from app.llm.gateway import chat_json, require_openrouter
+from app.llm.prompts import DOCUMENTATION_SYSTEM
 
-def run_documentation_agent(
+
+async def run_documentation_agent(
     doc_type: str,
     patient: dict[str, Any],
     encounter: dict[str, Any],
     diagnosis: dict[str, Any] | None = None,
     treatment: dict[str, Any] | None = None,
+) -> dict[str, Any]:
+    template = _template_doc(doc_type, patient, encounter, diagnosis, treatment)
+
+    if settings.llm_provider.lower() == "mock":
+        return template
+
+    require_openrouter()
+    llm = await chat_json(
+        DOCUMENTATION_SYSTEM,
+        json.dumps(
+            {
+                "doc_type": doc_type,
+                "patient": patient,
+                "encounter": encounter,
+                "diagnosis": diagnosis,
+                "treatment": treatment,
+            }
+        ),
+    )
+    # Prefer LLM fields, keep template keys as fallback
+    merged = {**template, **{k: v for k, v in llm.items() if isinstance(v, (str, list))}}
+    merged["provider"] = "openrouter"
+    return merged
+
+
+def _template_doc(
+    doc_type: str,
+    patient: dict[str, Any],
+    encounter: dict[str, Any],
+    diagnosis: dict[str, Any] | None,
+    treatment: dict[str, Any] | None,
 ) -> dict[str, Any]:
     patient_name = f"{patient.get('first_name', '')} {patient.get('last_name', '')}".strip()
     complaint = encounter.get("chief_complaint", "Not documented")

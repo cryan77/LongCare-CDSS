@@ -47,7 +47,7 @@ async def generate_documentation(
         "vitals": patient.vitals,
     }
     encounter_dict = {"chief_complaint": encounter.chief_complaint}
-    content = run_documentation_agent(req.doc_type, patient_dict, encounter_dict, diagnosis)
+    content = await run_documentation_agent(req.doc_type, patient_dict, encounter_dict, diagnosis)
 
     doc = ClinicalDocument(
         encounter_id=encounter.id,

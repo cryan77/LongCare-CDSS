@@ -107,15 +107,24 @@ async def run_treatment_agent(
         },
     }
 
-    if settings.use_openrouter:
-        llm = await chat_json(
-            TREATMENT_SYSTEM,
-            json.dumps({"diagnosis": diagnosis_name, "patient": patient, "heuristic": result}),
-        )
-        if llm and "medications" in llm:
-            result["medications"] = llm["medications"]
-            result["warnings"] = list(dict.fromkeys(result["warnings"] + llm.get("warnings", [])))
-            if llm.get("guidelines"):
-                result["guidelines"] = llm["guidelines"]
+    if settings.llm_provider.lower() == "mock":
+        return result
 
+    from app.llm.gateway import require_openrouter
+
+    require_openrouter()
+    llm = await chat_json(
+        TREATMENT_SYSTEM,
+        json.dumps({"diagnosis": diagnosis_name, "patient": patient, "safety_context": result}),
+    )
+    if "medications" not in llm or not llm["medications"]:
+        raise RuntimeError("OpenRouter treatment response missing medications")
+
+    result["medications"] = llm["medications"]
+    result["warnings"] = list(
+        dict.fromkeys(result["warnings"] + llm.get("warnings", []) + ["Physician approval required"])
+    )
+    if llm.get("guidelines"):
+        result["guidelines"] = llm["guidelines"]
+    result["provider"] = "openrouter"
     return result

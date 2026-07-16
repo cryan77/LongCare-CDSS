@@ -45,7 +45,7 @@ Open http://127.0.0.1:5173
 - RBAC (doctor / nurse / admin)
 - Alembic migrations + Postgres/Qdrant via docker-compose
 
-## OpenRouter (optional)
+## OpenRouter (required for live AI)
 
 In `backend/.env`:
 
@@ -57,7 +57,7 @@ OPENROUTER_VISION_MODEL=openai/gpt-4o
 OPENROUTER_EMBEDDING_MODEL=openai/text-embedding-3-small
 ```
 
-Default is `LLM_PROVIDER=mock` (works offline).
+Restart the backend after changing `.env`. Mock mode is only used if you explicitly set `LLM_PROVIDER=mock`.
 
 ## Vector store
 

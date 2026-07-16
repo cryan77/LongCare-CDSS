@@ -65,8 +65,8 @@ def _safety(state: WorkflowState) -> WorkflowState:
     return {**state, "safety_review": safety_review}
 
 
-def _documentation(state: WorkflowState) -> WorkflowState:
-    documentation = run_documentation_agent(
+async def _documentation(state: WorkflowState) -> WorkflowState:
+    documentation = await run_documentation_agent(
         "soap",
         state["patient"],
         state.get("encounter", {}),
@@ -160,7 +160,7 @@ class ClinicalOrchestrator:
         state = await _knowledge(state)
         state = await _treatment(state)
         state = _safety(state)
-        state = _documentation(state)
+        state = await _documentation(state)
         state = _human_gate(state)
         return {
             "diagnosis": state["diagnosis"],
