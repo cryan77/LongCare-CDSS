@@ -1,0 +1,42 @@
+GUIDELINES = [
+    {
+        "id": "cap-who-2024",
+        "text": "Community-acquired pneumonia: empiric therapy with amoxicillin 1g TID or doxycycline for outpatients without comorbidities. CURB-65 score guides admission decisions.",
+        "metadata": {"disease": "pneumonia", "source": "WHO", "year": 2024},
+    },
+    {
+        "id": "cap-nice-2023",
+        "text": "For moderate CAP, consider amoxicillin plus macrolide or respiratory fluoroquinolone. Reassess at 48-72 hours.",
+        "metadata": {"disease": "pneumonia", "source": "NICE", "year": 2023},
+    },
+    {
+        "id": "htn-aha-2024",
+        "text": "Hypertension: target BP <130/80 for most adults. First-line agents include thiazide diuretics, ACE inhibitors, ARBs, or CCBs.",
+        "metadata": {"disease": "hypertension", "source": "AHA", "year": 2024},
+    },
+    {
+        "id": "dm-ada-2024",
+        "text": "Type 2 diabetes: metformin first-line unless contraindicated. HbA1c target generally <7% for most adults.",
+        "metadata": {"disease": "diabetes", "source": "ADA", "year": 2024},
+    },
+    {
+        "id": "af-esc-2024",
+        "text": "Atrial fibrillation: CHA2DS2-VASc score guides anticoagulation. DOACs preferred over warfarin unless mechanical valve.",
+        "metadata": {"disease": "atrial fibrillation", "source": "ESC", "year": 2024},
+    },
+    {
+        "id": "copd-gold-2024",
+        "text": "COPD exacerbation: SABA plus SAMA, systemic corticosteroids, antibiotics if purulent sputum.",
+        "metadata": {"disease": "copd", "source": "GOLD", "year": 2024},
+    },
+    {
+        "id": "uti-idsa-2023",
+        "text": "Uncomplicated UTI in women: nitrofurantoin 100mg BID x 5 days or TMP-SMX as alternative.",
+        "metadata": {"disease": "uti", "source": "IDSA", "year": 2023},
+    },
+    {
+        "id": "samd-hc-2024",
+        "text": "AI-CDSS may be classified as Software as a Medical Device (SaMD) if providing diagnostic or treatment recommendations requiring Health Canada approval.",
+        "metadata": {"disease": "regulatory", "source": "Health Canada", "year": 2024},
+    },
+]
