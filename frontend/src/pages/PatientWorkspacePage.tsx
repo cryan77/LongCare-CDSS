@@ -16,6 +16,7 @@ import { useNavigate } from 'react-router-dom';
 import { timelineApi } from '../api/client';
 import { useAuthStore, useClinicalStore } from '../store';
 import PatientHeader from '../components/Patient/PatientHeader';
+import { getPatientXrays } from '../utils/patientXrays';
 
 export default function PatientWorkspacePage() {
   const { user } = useAuthStore();
@@ -286,8 +287,50 @@ export default function PatientWorkspacePage() {
                   Imaging
                 </Typography>
                 <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-                  Upload and analyze chest imaging for this patient.
+                  Mock chest X-ray studies for this patient (from `/xrays`).
                 </Typography>
+                <Box
+                  sx={{
+                    display: 'grid',
+                    gap: 1.5,
+                    gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr', md: 'repeat(3, 1fr)' },
+                    mb: 2,
+                  }}
+                >
+                  {getPatientXrays(selectedPatient).map((study) => (
+                    <Box
+                      key={study.id}
+                      sx={{
+                        borderRadius: 2,
+                        overflow: 'hidden',
+                        border: '1px solid',
+                        borderColor: 'divider',
+                        bgcolor: 'background.default',
+                      }}
+                    >
+                      <Box
+                        component="img"
+                        src={study.src}
+                        alt={study.title}
+                        sx={{
+                          width: '100%',
+                          height: 180,
+                          objectFit: 'cover',
+                          display: 'block',
+                          bgcolor: '#0a0a0a',
+                        }}
+                      />
+                      <Box sx={{ p: 1.25 }}>
+                        <Typography variant="body2" sx={{ fontWeight: 650 }}>
+                          {study.title}
+                        </Typography>
+                        <Typography variant="caption" color="text.secondary">
+                          {study.date} · {study.modality} · {study.bodyPart}
+                        </Typography>
+                      </Box>
+                    </Box>
+                  ))}
+                </Box>
                 <Button variant="contained" onClick={() => navigate('/app/imaging')}>
                   Open X-Ray Analysis
                 </Button>

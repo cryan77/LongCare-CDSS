@@ -7,35 +7,38 @@ type Props = {
   size?: number;
 };
 
-function hash(value: string) {
-  return value.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
-}
-
 function initials(patient: Patient) {
   return `${patient.first_name[0] || ''}${patient.last_name[0] || ''}`.toUpperCase();
 }
 
-/** Stable mock portrait from RandomUser CDN (gender-aware, seeded by MRN). */
-export function patientPhotoUrl(patient: Patient, size = 150): string {
-  const seed = hash(`${patient.mrn}|${patient.first_name}|${patient.last_name}`);
-  const isFemale = patient.gender.toLowerCase().startsWith('f');
-  const folder = isFemale ? 'women' : 'men';
-  const id = seed % 100; // randomuser portraits are 0–99
-  // Request via images.weserv.nl for consistent sizing/caching when needed;
-  // direct CDN is fine for demo:
-  void size;
-  return `https://randomuser.me/api/portraits/${folder}/${id}.jpg`;
+export function exactGender(gender: string): 'male' | 'female' {
+  const g = (gender || '').trim().toLowerCase();
+  if (g.startsWith('f') || g === 'woman' || g === 'w') return 'female';
+  return 'male';
+}
+
+/** Instant local avatar — pre-downloaded to /public/avatars/{MRN}.jpg */
+export function patientPhotoUrl(patient: Patient): string {
+  return `/avatars/${patient.mrn}.jpg`;
 }
 
 export default function PatientAvatar({ patient, size = 76 }: Props) {
-  const [failed, setFailed] = useState(false);
-  const src = useMemo(() => patientPhotoUrl(patient, size * 2), [patient, size]);
+  const src = useMemo(() => patientPhotoUrl(patient), [patient.mrn]);
+  const [failedMrn, setFailedMrn] = useState<string | null>(null);
+  const failed = failedMrn === patient.mrn;
 
   return (
     <Avatar
+      key={patient.mrn}
       src={failed ? undefined : src}
-      alt={`${patient.first_name} ${patient.last_name}`}
-      onError={() => setFailed(true)}
+      alt={`${patient.first_name} ${patient.last_name}, ${patient.age}yo ${exactGender(patient.gender)}`}
+      slotProps={{
+        img: {
+          loading: 'eager',
+          decoding: 'async',
+          onError: () => setFailedMrn(patient.mrn),
+        },
+      }}
       sx={{
         width: size,
         height: size,

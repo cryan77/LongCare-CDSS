@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   Alert,
   Box,
@@ -14,11 +14,17 @@ import { imagingApi } from '../api/client';
 import { useClinicalStore } from '../store';
 import PatientHeader from '../components/Patient/PatientHeader';
 import ConfidenceScore from '../components/AI/ConfidenceScore';
+import {
+  getPatientXrays,
+  loadMockXrayFile,
+  type PatientXrayStudy,
+} from '../utils/patientXrays';
 
 export default function ImagingPage() {
   const { selectedPatient } = useClinicalStore();
   const [file, setFile] = useState<File | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
+  const [selectedStudyId, setSelectedStudyId] = useState<string | null>(null);
   const [dragging, setDragging] = useState(false);
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<{
@@ -30,16 +36,71 @@ export default function ImagingPage() {
   } | null>(null);
   const [error, setError] = useState('');
 
+  const studies = useMemo(
+    () => (selectedPatient ? getPatientXrays(selectedPatient) : []),
+    [selectedPatient],
+  );
+
+  const clearObjectUrl = useCallback((url: string | null) => {
+    if (url?.startsWith('blob:')) URL.revokeObjectURL(url);
+  }, []);
+
   const onFile = useCallback(
     (f: File | null) => {
       setFile(f);
       setResult(null);
       setError('');
-      if (preview) URL.revokeObjectURL(preview);
+      setSelectedStudyId(null);
+      clearObjectUrl(preview);
       setPreview(f ? URL.createObjectURL(f) : null);
     },
-    [preview],
+    [preview, clearObjectUrl],
   );
+
+  const selectStudy = async (study: PatientXrayStudy) => {
+    setError('');
+    setResult(null);
+    setSelectedStudyId(study.id);
+    clearObjectUrl(preview);
+    setPreview(study.src);
+    try {
+      const f = await loadMockXrayFile(study.filename);
+      setFile(f);
+    } catch {
+      setError('Could not load mock X-ray file.');
+      setFile(null);
+    }
+  };
+
+  // Auto-select first patient study when patient changes
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      if (!selectedPatient) return;
+      const list = getPatientXrays(selectedPatient);
+      if (!list.length) return;
+      const study = list[0];
+      setError('');
+      setResult(null);
+      setSelectedStudyId(study.id);
+      setPreview((prev) => {
+        if (prev?.startsWith('blob:')) URL.revokeObjectURL(prev);
+        return study.src;
+      });
+      try {
+        const f = await loadMockXrayFile(study.filename);
+        if (!cancelled) setFile(f);
+      } catch {
+        if (!cancelled) {
+          setError('Could not load mock X-ray file.');
+          setFile(null);
+        }
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [selectedPatient?.id]);
 
   const analyze = async () => {
     if (!file) return;
@@ -64,15 +125,76 @@ export default function ImagingPage() {
         Medical Imaging
       </Typography>
       <Typography variant="body1" color="text.secondary" sx={{ mb: 3 }}>
-        Upload chest X-ray / CT for Vision AI findings — physician interpretation required.
+        Review patient chest X-rays from the mock study library, or upload a new image for Vision AI.
       </Typography>
 
       {selectedPatient ? (
         <PatientHeader patient={selectedPatient} />
       ) : (
         <Alert severity="info" sx={{ mb: 3 }}>
-          Optional: select a patient to attach imaging to the chart.
+          Select a patient to load their mock X-ray studies, or upload any image below.
         </Alert>
+      )}
+
+      {selectedPatient && studies.length > 0 && (
+        <Card sx={{ mb: 3 }}>
+          <CardContent>
+            <Typography variant="h5" color="primary.main" gutterBottom>
+              Patient X-Ray Studies
+            </Typography>
+            <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+              Mock images from `/xrays` — click a study to analyze.
+            </Typography>
+            <Box
+              sx={{
+                display: 'grid',
+                gap: 1.5,
+                gridTemplateColumns: { xs: '1fr 1fr', sm: 'repeat(3, 1fr)', md: 'repeat(4, 1fr)' },
+              }}
+            >
+              {studies.map((study) => {
+                const selected = selectedStudyId === study.id;
+                return (
+                  <Box
+                    key={study.id}
+                    onClick={() => void selectStudy(study)}
+                    sx={{
+                      cursor: 'pointer',
+                      borderRadius: 2,
+                      overflow: 'hidden',
+                      border: '2px solid',
+                      borderColor: selected ? 'primary.main' : 'divider',
+                      bgcolor: 'background.default',
+                      transition: 'border-color 120ms ease, box-shadow 120ms ease',
+                      '&:hover': { borderColor: 'primary.light', boxShadow: '0 4px 14px rgba(15,47,84,0.12)' },
+                    }}
+                  >
+                    <Box
+                      component="img"
+                      src={study.src}
+                      alt={study.title}
+                      sx={{
+                        width: '100%',
+                        height: 140,
+                        objectFit: 'cover',
+                        display: 'block',
+                        bgcolor: '#0a0a0a',
+                      }}
+                    />
+                    <Box sx={{ p: 1.25 }}>
+                      <Typography variant="body2" sx={{ fontWeight: 650 }}>
+                        {study.title}
+                      </Typography>
+                      <Typography variant="caption" color="text.secondary">
+                        {study.date} · {study.modality}
+                      </Typography>
+                    </Box>
+                  </Box>
+                );
+              })}
+            </Box>
+          </CardContent>
+        </Card>
       )}
 
       <Card
@@ -94,13 +216,13 @@ export default function ImagingPage() {
           if (f && f.type.startsWith('image/')) onFile(f);
         }}
       >
-        <CardContent sx={{ textAlign: 'center', py: 5 }}>
-          <CloudUploadIcon sx={{ fontSize: 48, color: 'primary.main', mb: 1 }} />
+        <CardContent sx={{ textAlign: 'center', py: 4 }}>
+          <CloudUploadIcon sx={{ fontSize: 40, color: 'primary.main', mb: 1 }} />
           <Typography variant="h4" gutterBottom>
-            Upload Image
+            Upload Additional Image
           </Typography>
           <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-            Drag & drop JPG/PNG here, or choose a file
+            Optional — drag & drop JPG/PNG, or choose a file
           </Typography>
           <Button variant="outlined" component="label" startIcon={<CloudUploadIcon />}>
             Choose Image
@@ -111,7 +233,7 @@ export default function ImagingPage() {
               onChange={(e) => onFile(e.target.files?.[0] ?? null)}
             />
           </Button>
-          {file && (
+          {file && !selectedStudyId && (
             <Typography variant="body2" sx={{ mt: 2 }}>
               {file.name}
             </Typography>
@@ -131,7 +253,14 @@ export default function ImagingPage() {
                   component="img"
                   src={preview}
                   alt="Original"
-                  sx={{ width: '100%', maxHeight: 360, objectFit: 'contain', borderRadius: 1, bgcolor: 'background.default' }}
+                  sx={{
+                    width: '100%',
+                    maxHeight: 420,
+                    objectFit: 'contain',
+                    borderRadius: 1,
+                    bgcolor: '#0a0a0a',
+                    display: 'block',
+                  }}
                 />
               )}
               <Button variant="contained" sx={{ mt: 2 }} onClick={analyze} disabled={!file || loading}>
@@ -186,7 +315,11 @@ export default function ImagingPage() {
         </Box>
       )}
 
-      {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
+      {error && (
+        <Alert severity="error" sx={{ mb: 2 }}>
+          {error}
+        </Alert>
+      )}
 
       {result && (
         <Card>
