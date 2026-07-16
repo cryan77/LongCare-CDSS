@@ -17,6 +17,7 @@ import CancelIcon from '@mui/icons-material/Cancel';
 import PictureAsPdfIcon from '@mui/icons-material/PictureAsPdf';
 import { docsApi, patientsApi } from '../api/client';
 import { useClinicalStore } from '../store';
+import PatientHeader from '../components/Patient/PatientHeader';
 
 export default function DocumentationPage() {
   const { selectedPatient, encounterId, lastDocumentId, setLastDocumentId, setEncounterId } =
@@ -74,11 +75,11 @@ export default function DocumentationPage() {
 
   return (
     <Box>
-      <Typography variant="h4" color="primary.dark" gutterBottom>
-        Clinical Documentation Agent
+      <Typography variant="h1" color="primary.dark" gutterBottom>
+        Clinical Documentation
       </Typography>
       <Typography variant="body1" color="text.secondary" sx={{ mb: 3 }}>
-        Generate SOAP notes and discharge summaries for physician review.
+        SOAP notes and discharge summaries — edit, approve, then export PDF.
       </Typography>
 
       {!selectedPatient && (
@@ -86,6 +87,7 @@ export default function DocumentationPage() {
           Select a patient to generate documentation.
         </Alert>
       )}
+      {selectedPatient && <PatientHeader patient={selectedPatient} />}
 
       <ToggleButtonGroup
         value={docType}

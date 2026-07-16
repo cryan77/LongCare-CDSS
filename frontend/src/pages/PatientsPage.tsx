@@ -8,12 +8,15 @@ import {
   Button,
   Chip,
   CircularProgress,
+  Stack,
 } from '@mui/material';
+import { useNavigate } from 'react-router-dom';
 import { patientsApi } from '../api/client';
 import { useClinicalStore } from '../store';
 
 export default function PatientsPage() {
   const { selectedPatient, setSelectedPatient } = useClinicalStore();
+  const navigate = useNavigate();
   const { data: patients, isLoading } = useQuery({
     queryKey: ['patients'],
     queryFn: patientsApi.list,
@@ -29,11 +32,11 @@ export default function PatientsPage() {
 
   return (
     <Box>
-      <Typography variant="h4" color="primary.dark" gutterBottom>
+      <Typography variant="h1" color="primary.dark" gutterBottom>
         Patient Registry
       </Typography>
       <Typography variant="body1" color="text.secondary" sx={{ mb: 4 }}>
-        Select a patient to begin AI-assisted clinical reasoning.
+        Select a patient, then open the clinical workspace to begin AI-assisted care.
       </Typography>
 
       <Grid container spacing={3}>
@@ -46,7 +49,7 @@ export default function PatientsPage() {
               }}
             >
               <CardContent>
-                <Typography variant="h6" color="primary.dark">
+                <Typography variant="h4" color="primary.dark">
                   {patient.first_name} {patient.last_name}
                 </Typography>
                 <Typography variant="body2" color="text.secondary" gutterBottom>
@@ -64,13 +67,25 @@ export default function PatientsPage() {
                 <Typography variant="caption" color="text.secondary" sx={{ mb: 2, display: 'block' }}>
                   BP: {String(patient.vitals?.bp ?? '—')} · Temp: {String(patient.vitals?.temp ?? '—')}°C
                 </Typography>
-                <Button
-                  variant={selectedPatient?.id === patient.id ? 'contained' : 'outlined'}
-                  size="small"
-                  onClick={() => setSelectedPatient(patient)}
-                >
-                  {selectedPatient?.id === patient.id ? 'Selected' : 'Select Patient'}
-                </Button>
+                <Stack direction="row" spacing={1} useFlexGap sx={{ flexWrap: 'wrap' }}>
+                  <Button
+                    variant={selectedPatient?.id === patient.id ? 'contained' : 'outlined'}
+                    size="small"
+                    onClick={() => setSelectedPatient(patient)}
+                  >
+                    {selectedPatient?.id === patient.id ? 'Selected' : 'Select'}
+                  </Button>
+                  <Button
+                    variant="contained"
+                    size="small"
+                    onClick={() => {
+                      setSelectedPatient(patient);
+                      navigate('/app/workspace');
+                    }}
+                  >
+                    Open Workspace
+                  </Button>
+                </Stack>
               </CardContent>
             </Card>
           </Grid>

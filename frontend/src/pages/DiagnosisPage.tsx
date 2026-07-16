@@ -1,22 +1,21 @@
 import { useState } from 'react';
 import {
+  Alert,
   Box,
   Button,
   Card,
   CardContent,
-  Chip,
+  Checkbox,
+  FormControlLabel,
+  LinearProgress,
   TextField,
   Typography,
-  Alert,
-  LinearProgress,
-  List,
-  ListItem,
-  ListItemText,
-  Divider,
 } from '@mui/material';
-import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import { diagnosisApi } from '../api/client';
 import { useClinicalStore } from '../store';
+import PatientHeader from '../components/Patient/PatientHeader';
+import DiagnosisCard from '../components/AI/DiagnosisCard';
+import AnalysisProgress from '../components/AI/AnalysisProgress';
 
 export default function DiagnosisPage() {
   const { selectedPatient, setLastDiagnosis, lastDiagnosis, setEncounterId } = useClinicalStore();
@@ -24,14 +23,20 @@ export default function DiagnosisPage() {
   const [wbc, setWbc] = useState('12000');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [activeStep, setActiveStep] = useState(-1);
+  const [status, setStatus] = useState('');
+  const [tests, setTests] = useState({ echo: false, cta: false, sputum: false });
 
   const runDiagnosis = async () => {
     if (!selectedPatient) {
-      setError('Please select a patient first.');
+      setError('Select a patient in Patients / Workspace first.');
       return;
     }
     setLoading(true);
     setError('');
+    setStatus('');
+    setActiveStep(0);
+    const timer = setInterval(() => setActiveStep((s) => (s < 4 ? s + 1 : s)), 400);
     try {
       const symptomList = symptoms.split(',').map((s) => s.trim()).filter(Boolean);
       const result = await diagnosisApi.run({
@@ -39,147 +44,112 @@ export default function DiagnosisPage() {
         symptoms: symptomList,
         labs: wbc ? { WBC: parseFloat(wbc) } : {},
       });
+      clearInterval(timer);
+      setActiveStep(5);
       setLastDiagnosis(result);
       if (result.encounter_id) setEncounterId(result.encounter_id);
     } catch {
-      setError('Diagnosis failed. Ensure the backend is running.');
+      clearInterval(timer);
+      setActiveStep(-1);
+      setError('Diagnosis failed. Check backend / OpenRouter configuration.');
     } finally {
       setLoading(false);
     }
   };
 
   const approve = async (approved: boolean) => {
-    if (lastDiagnosis?.id) {
-      await diagnosisApi.approve(lastDiagnosis.id, approved);
-    }
+    if (!lastDiagnosis?.id) return;
+    await diagnosisApi.approve(lastDiagnosis.id, approved);
+    setStatus(approved ? 'Diagnosis approved by physician' : 'Diagnosis rejected');
   };
 
   return (
     <Box>
-      <Typography variant="h4" color="primary.dark" gutterBottom>
-        AI Diagnosis Agent
+      <Typography variant="h1" color="primary.dark" gutterBottom>
+        AI Diagnosis Workspace
       </Typography>
       <Typography variant="body1" color="text.secondary" sx={{ mb: 3 }}>
-        Multi-agent clinical reasoning with differential diagnosis and evidence retrieval.
+        Assessment for physician review — AI never finalizes clinical decisions.
       </Typography>
 
       {!selectedPatient && (
         <Alert severity="warning" sx={{ mb: 3 }}>
-          Select a patient from the Patients page to run diagnosis.
+          Select a patient to begin the clinical assessment.
         </Alert>
       )}
+      {selectedPatient && <PatientHeader patient={selectedPatient} />}
 
-      {selectedPatient && (
-        <Alert severity="info" sx={{ mb: 3 }}>
-          Patient: {selectedPatient.first_name} {selectedPatient.last_name} ({selectedPatient.mrn})
-        </Alert>
-      )}
-
-      <Card sx={{ mb: 3 }}>
-        <CardContent>
-          <TextField
-            fullWidth
-            label="Symptoms (comma-separated)"
-            value={symptoms}
-            onChange={(e) => setSymptoms(e.target.value)}
-            margin="normal"
-          />
-          <TextField
-            fullWidth
-            label="WBC (cells/µL)"
-            value={wbc}
-            onChange={(e) => setWbc(e.target.value)}
-            margin="normal"
-            type="number"
-          />
-          <Button variant="contained" onClick={runDiagnosis} disabled={loading} sx={{ mt: 2 }}>
-            Run Diagnosis Agent
-          </Button>
-          {loading && <LinearProgress sx={{ mt: 2 }} />}
-        </CardContent>
-      </Card>
-
-      {error && <Alert severity="error">{error}</Alert>}
-
-      {lastDiagnosis && (
+      <Box sx={{ display: 'grid', gap: 3, gridTemplateColumns: { xs: '1fr', lg: '0.95fr 1.05fr' } }}>
         <Card>
           <CardContent>
-            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-              <Typography variant="h6">AI Reasoning Output</Typography>
-              <Chip
-                label={`${Math.round(lastDiagnosis.confidence * 100)}% confidence`}
-                color="primary"
-              />
-            </Box>
-
-            <Typography variant="subtitle2" color="primary.main" gutterBottom>
-              Primary Diagnosis
+            <Typography variant="h5" color="primary.main" gutterBottom>
+              Clinical Inputs
             </Typography>
-            {lastDiagnosis.diagnosis.map((d) => (
-              <Chip
-                key={d.name}
-                label={`${d.name} (${Math.round(d.probability * 100)}%)`}
-                color="primary"
-                sx={{ mr: 1, mb: 1 }}
-              />
-            ))}
-
-            <Typography variant="subtitle2" color="text.secondary" sx={{ mt: 2 }} gutterBottom>
-              Differential
+            <TextField
+              fullWidth
+              label="Patient symptoms"
+              value={symptoms}
+              onChange={(e) => setSymptoms(e.target.value)}
+              margin="normal"
+              helperText="Comma-separated (shown as evidence checks)"
+            />
+            <TextField
+              fullWidth
+              label="WBC (cells/µL)"
+              value={wbc}
+              onChange={(e) => setWbc(e.target.value)}
+              margin="normal"
+              type="number"
+            />
+            <Typography variant="h5" color="text.secondary" sx={{ mt: 2, mb: 1 }}>
+              Recommended tests
             </Typography>
-            <Box sx={{ mb: 2 }}>
-              {lastDiagnosis.differential.map((d) => (
-                <Chip key={d} label={d} variant="outlined" size="small" sx={{ mr: 0.5, mb: 0.5 }} />
-              ))}
-            </Box>
-
-            <Typography variant="subtitle2" gutterBottom>
-              Clinical Reasoning
-            </Typography>
-            <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-              {lastDiagnosis.reasoning}
-            </Typography>
-
-            <Divider sx={{ my: 2 }} />
-
-            <Typography variant="subtitle2" gutterBottom>
-              Evidence (RAG)
-            </Typography>
-            <List dense>
-              {lastDiagnosis.evidence.map((e) => (
-                <ListItem key={e.id} alignItems="flex-start">
-                  <ListItemText
-                    primary={`${e.source} (${e.year}) — relevance ${e.relevance}`}
-                    secondary={e.excerpt}
-                  />
-                </ListItem>
-              ))}
-            </List>
-
-            {lastDiagnosis.safety_flags.length > 0 && (
-              <Alert severity="warning" sx={{ mt: 2 }}>
-                {lastDiagnosis.safety_flags.join('; ')}
-              </Alert>
+            <FormControlLabel
+              control={<Checkbox checked={tests.echo} onChange={(e) => setTests({ ...tests, echo: e.target.checked })} />}
+              label="Echocardiogram"
+            />
+            <FormControlLabel
+              control={<Checkbox checked={tests.cta} onChange={(e) => setTests({ ...tests, cta: e.target.checked })} />}
+              label="CT Angiography"
+            />
+            <FormControlLabel
+              control={<Checkbox checked={tests.sputum} onChange={(e) => setTests({ ...tests, sputum: e.target.checked })} />}
+              label="Sputum culture"
+            />
+            <Button variant="contained" onClick={runDiagnosis} disabled={loading || !selectedPatient} sx={{ mt: 2, display: 'block' }}>
+              Run AI Assessment
+            </Button>
+            {loading && <LinearProgress sx={{ mt: 2 }} />}
+            {(loading || activeStep >= 0) && (
+              <Box sx={{ mt: 2 }}>
+                <AnalysisProgress activeStep={Math.min(activeStep, 4)} completed={!loading && !!lastDiagnosis} />
+              </Box>
             )}
-
-            <Alert severity="info" sx={{ mt: 2 }}>
-              All AI recommendations require physician review before entering the clinical record.
-            </Alert>
-
-            <Button
-              variant="contained"
-              startIcon={<CheckCircleIcon />}
-              onClick={() => approve(true)}
-              sx={{ mt: 2, mr: 1 }}
-            >
-              Approve Diagnosis
-            </Button>
-            <Button variant="outlined" color="error" onClick={() => approve(false)} sx={{ mt: 2 }}>
-              Reject
-            </Button>
           </CardContent>
         </Card>
-      )}
+
+        <Box>
+          {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
+          {status && <Alert severity="success" sx={{ mb: 2 }}>{status}</Alert>}
+          {lastDiagnosis ? (
+            <DiagnosisCard
+              result={lastDiagnosis}
+              symptoms={symptoms.split(',').map((s) => s.trim()).filter(Boolean)}
+              onApprove={() => approve(true)}
+              onReject={() => approve(false)}
+              onRequestMore={runDiagnosis}
+            />
+          ) : (
+            <Card>
+              <CardContent>
+                <Typography color="text.secondary">
+                  AI assessment will appear here with confidence, evidence, differentials, and physician controls.
+                </Typography>
+              </CardContent>
+            </Card>
+          )}
+        </Box>
+      </Box>
     </Box>
   );
 }

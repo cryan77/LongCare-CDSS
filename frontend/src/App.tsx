@@ -16,6 +16,9 @@ import DocumentationPage from './pages/DocumentationPage';
 import WorkflowPage from './pages/WorkflowPage';
 import TimelinePage from './pages/TimelinePage';
 import ImagingPage from './pages/ImagingPage';
+import PatientWorkspacePage from './pages/PatientWorkspacePage';
+import KnowledgePage from './pages/KnowledgePage';
+import AdminPage from './pages/AdminPage';
 import { AuthBootstrap } from './components/AuthBootstrap';
 
 const queryClient = new QueryClient();
@@ -60,13 +63,16 @@ export default function App() {
               <Route index element={<Navigate to="dashboard" replace />} />
               <Route path="dashboard" element={<DashboardPage />} />
               <Route path="patients" element={<PatientsPage />} />
+              <Route path="workspace" element={<PatientWorkspacePage />} />
               <Route path="workflow" element={<WorkflowPage />} />
               <Route path="timeline" element={<TimelinePage />} />
               <Route path="imaging" element={<ImagingPage />} />
               <Route path="diagnosis" element={<DiagnosisPage />} />
               <Route path="treatment" element={<TreatmentPage />} />
               <Route path="chat" element={<ChatPage />} />
+              <Route path="knowledge" element={<KnowledgePage />} />
               <Route path="documentation" element={<DocumentationPage />} />
+              <Route path="admin" element={<AdminPage />} />
             </Route>
           </Routes>
         </BrowserRouter>

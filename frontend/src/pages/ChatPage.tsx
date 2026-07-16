@@ -1,18 +1,20 @@
 import { useState } from 'react';
 import {
+  Alert,
   Box,
   Button,
   Card,
   CardContent,
-  TextField,
-  Typography,
-  Paper,
   Chip,
   CircularProgress,
+  Paper,
+  TextField,
+  Typography,
 } from '@mui/material';
 import SendIcon from '@mui/icons-material/Send';
 import { chatApi } from '../api/client';
 import { useClinicalStore } from '../store';
+import PatientHeader from '../components/Patient/PatientHeader';
 
 interface Message {
   role: string;
@@ -26,7 +28,7 @@ export default function ChatPage() {
     {
       role: 'assistant',
       content:
-        'I am the Medical Knowledge Agent. Ask me about clinical guidelines, treatment protocols, or drug information. All responses include citations and require physician review.',
+        'Clinical AI Assistant — ask guideline-backed questions in the context of the selected patient. Sources will be cited. Physician review required.',
     },
   ]);
   const [input, setInput] = useState('');
@@ -44,7 +46,7 @@ export default function ChatPage() {
     } catch {
       setMessages((prev) => [
         ...prev,
-        { role: 'assistant', content: 'Unable to reach knowledge agent. Is the backend running?' },
+        { role: 'assistant', content: 'Unable to reach clinical knowledge agent.' },
       ]);
     } finally {
       setLoading(false);
@@ -53,14 +55,22 @@ export default function ChatPage() {
 
   return (
     <Box>
-      <Typography variant="h4" color="primary.dark" gutterBottom>
-        Medical Knowledge Chat
+      <Typography variant="h1" color="primary.dark" gutterBottom>
+        Clinical AI Assistant
       </Typography>
       <Typography variant="body1" color="text.secondary" sx={{ mb: 3 }}>
-        RAG-powered clinical Q&A with guideline citations from WHO, NICE, AHA, and more.
+        Patient-context aware Q&A with citations — not a general chatbot.
       </Typography>
 
-      <Card sx={{ height: 520, display: 'flex', flexDirection: 'column' }}>
+      {!selectedPatient ? (
+        <Alert severity="warning" sx={{ mb: 2 }}>
+          Select a patient to ground answers in chart context.
+        </Alert>
+      ) : (
+        <PatientHeader patient={selectedPatient} />
+      )}
+
+      <Card sx={{ height: 560, display: 'flex', flexDirection: 'column' }}>
         <CardContent sx={{ flexGrow: 1, overflow: 'auto' }}>
           {messages.map((msg, i) => (
             <Box
@@ -72,39 +82,47 @@ export default function ChatPage() {
               }}
             >
               <Paper
+                elevation={0}
                 sx={{
                   p: 2,
-                  maxWidth: '80%',
-                  bgcolor: msg.role === 'user' ? 'primary.main' : 'grey.100',
+                  maxWidth: '85%',
+                  bgcolor: msg.role === 'user' ? 'primary.main' : 'background.default',
                   color: msg.role === 'user' ? 'white' : 'text.primary',
+                  border: msg.role === 'user' ? 'none' : '1px solid',
+                  borderColor: 'divider',
+                  borderRadius: 2,
                 }}
               >
+                {msg.role !== 'user' && (
+                  <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 700, display: 'block', mb: 0.5 }}>
+                    AI · Evidence-informed
+                  </Typography>
+                )}
                 <Typography variant="body2" sx={{ whiteSpace: 'pre-wrap' }}>
                   {msg.content}
                 </Typography>
                 {msg.citations && msg.citations.length > 0 && (
-                  <Box sx={{ mt: 1 }}>
-                    {msg.citations.map((c, j) => (
-                      <Chip
-                        key={j}
-                        label={c.source}
-                        size="small"
-                        variant="outlined"
-                        sx={{ mr: 0.5, mt: 0.5 }}
-                      />
-                    ))}
+                  <Box sx={{ mt: 1.5 }}>
+                    <Typography variant="caption" sx={{ fontWeight: 700 }}>
+                      Sources
+                    </Typography>
+                    <Box sx={{ mt: 0.5 }}>
+                      {msg.citations.map((c, j) => (
+                        <Chip key={j} label={c.source} size="small" variant="outlined" sx={{ mr: 0.5, mt: 0.5 }} />
+                      ))}
+                    </Box>
                   </Box>
                 )}
               </Paper>
             </Box>
           ))}
-          {loading && <CircularProgress size={24} />}
+          {loading && <CircularProgress size={22} />}
         </CardContent>
         <Box sx={{ p: 2, borderTop: '1px solid', borderColor: 'divider', display: 'flex', gap: 1 }}>
           <TextField
             fullWidth
             size="small"
-            placeholder="Ask about pneumonia treatment guidelines..."
+            placeholder="e.g. What are first-line options for outpatient CAP?"
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && send()}
