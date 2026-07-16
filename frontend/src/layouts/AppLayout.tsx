@@ -17,16 +17,20 @@ import BiotechIcon from '@mui/icons-material/Biotech';
 import MedicationIcon from '@mui/icons-material/Medication';
 import ChatIcon from '@mui/icons-material/Chat';
 import DescriptionIcon from '@mui/icons-material/Description';
+import AccountTreeIcon from '@mui/icons-material/AccountTree';
 import LogoutIcon from '@mui/icons-material/Logout';
 import MenuIcon from '@mui/icons-material/Menu';
 import { useState } from 'react';
-import { useAuthStore } from '../store';
+import { useAuthStore, useClinicalStore } from '../store';
 
 const DRAWER_WIDTH = 260;
 
 const navItems = [
   { label: 'Dashboard', path: '/app/dashboard', icon: <DashboardIcon /> },
   { label: 'Patients', path: '/app/patients', icon: <PeopleIcon /> },
+  { label: 'Run CDSS', path: '/app/workflow', icon: <AccountTreeIcon /> },
+  { label: 'Timeline', path: '/app/timeline', icon: <PeopleIcon /> },
+  { label: 'Imaging', path: '/app/imaging', icon: <BiotechIcon /> },
   { label: 'Diagnosis', path: '/app/diagnosis', icon: <BiotechIcon /> },
   { label: 'Treatment', path: '/app/treatment', icon: <MedicationIcon /> },
   { label: 'Knowledge Chat', path: '/app/chat', icon: <ChatIcon /> },
@@ -35,6 +39,7 @@ const navItems = [
 
 export default function AppLayout() {
   const { token, logout, user } = useAuthStore();
+  const resetClinical = useClinicalStore((s) => s.resetClinical);
   const navigate = useNavigate();
   const [mobileOpen, setMobileOpen] = useState(false);
 
@@ -65,6 +70,7 @@ export default function AppLayout() {
         <ListItemButton
           onClick={() => {
             logout();
+            resetClinical();
             navigate('/');
           }}
         >

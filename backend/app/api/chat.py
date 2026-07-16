@@ -6,7 +6,7 @@ from app.agents.orchestrator import orchestrator
 from app.database.models import ChatMessage, Patient, User
 from app.database.session import get_db
 from app.models.schemas import ChatRequest, ChatResponse
-from app.security.auth import get_current_user
+from app.security.rbac import require_clinician, require_doctor
 
 router = APIRouter(prefix="/chat", tags=["chat"])
 
@@ -15,7 +15,7 @@ router = APIRouter(prefix="/chat", tags=["chat"])
 async def chat(
     req: ChatRequest,
     db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_doctor),
 ):
     patient = None
     if req.patient_id:
@@ -58,7 +58,7 @@ async def chat(
 async def chat_history(
     encounter_id: int | None = None,
     db: AsyncSession = Depends(get_db),
-    _: User = Depends(get_current_user),
+    _: User = Depends(require_clinician),
 ):
     query = select(ChatMessage).order_by(ChatMessage.created_at)
     if encounter_id:

@@ -1,13 +1,6 @@
 # LongCare AI-CDSS
 
-AI-Powered Clinical Decision Support System — an enterprise multi-agent healthcare platform for clinician assistance using LLMs, RAG, and workflow orchestration.
-
-## Architecture
-
-- **Frontend:** React 19, TypeScript, Vite, Material UI
-- **Backend:** Python 3.12, FastAPI, SQLAlchemy, multi-agent orchestration
-- **AI:** Diagnosis, Treatment, Knowledge (RAG), and Documentation agents
-- **Data:** SQLite (dev), guideline knowledge base with hybrid retrieval
+AI-Powered Clinical Decision Support System — multi-agent clinical workflow with optional OpenRouter LLM, RAG, Vision, and LangGraph orchestration.
 
 ## Quick Start
 
@@ -16,11 +9,10 @@ AI-Powered Clinical Decision Support System — an enterprise multi-agent health
 ```bash
 cd backend
 python -m venv venv
-venv\Scripts\activate        # Windows
+venv\Scripts\activate
 pip install -r requirements.txt
-pip install email-validator
 copy .env.example .env
-uvicorn app.main:app --reload --port 8000
+uvicorn app.main:app --reload --host 127.0.0.1 --port 8000
 ```
 
 ### Frontend
@@ -28,48 +20,61 @@ uvicorn app.main:app --reload --port 8000
 ```bash
 cd frontend
 npm install
-npm run dev
+npm run dev -- --host 127.0.0.1 --port 5173
 ```
 
-Open [http://localhost:5173](http://localhost:5173)
+Open http://127.0.0.1:5173
 
-### Demo Login
+### Demo logins
 
-- **Email:** `doctor@longcare.ca`
-- **Password:** `demo1234`
+| Role | Email | Password |
+|------|-------|----------|
+| Doctor | doctor@longcare.ca | demo1234 |
+| Nurse | nurse@longcare.ca | demo1234 |
+| Admin | admin@longcare.ca | demo1234 |
 
 ## Features
 
-| Module | Description |
-|--------|-------------|
-| Landing Page | Amplify Care–inspired CDS education and evaluation guide |
-| Patient Registry | Demographics, allergies, vitals |
-| Diagnosis Agent | Symptom-based reasoning, differential, RAG evidence |
-| Treatment Agent | Guideline-aligned meds, allergy & interaction checks |
-| Knowledge Chat | RAG Q&A with citations (WHO, NICE, AHA, etc.) |
-| Documentation | SOAP notes and discharge summaries |
-| Physician Approval | Human-in-the-loop workflow for all AI outputs |
+- Amplify Care–style CDS landing page
+- **Run CDSS** full workflow (validation → diagnosis → knowledge → treatment → safety → docs)
+- Patient registry + **medical timeline**
+- Diagnosis / treatment / documentation with **approve / reject / edit**
+- Knowledge chat with RAG citations
+- **Imaging** JPG/PNG analyze (mock or OpenRouter vision)
+- **PDF export** for clinical documents
+- RBAC (doctor / nurse / admin)
+- Alembic migrations + Postgres/Qdrant via docker-compose
 
-## API
+## OpenRouter (optional)
 
-- `POST /api/v1/auth/login` — OAuth2 login
-- `GET /api/v1/patients` — List patients
-- `POST /api/v1/diagnosis` — Run diagnosis agent
-- `POST /api/v1/treatment` — Treatment recommendations
-- `POST /api/v1/chat` — Medical knowledge Q&A
-- `POST /api/v1/documentation` — Generate clinical docs
-
-API docs: [http://localhost:8000/docs](http://localhost:8000/docs)
-
-## Optional: OpenAI Integration
-
-Set in `backend/.env`:
+In `backend/.env`:
 
 ```
-LLM_PROVIDER=openai
-OPENAI_API_KEY=sk-...
+LLM_PROVIDER=openrouter
+OPENROUTER_API_KEY=sk-or-...
+OPENROUTER_MODEL=openai/gpt-4o-mini
+OPENROUTER_VISION_MODEL=openai/gpt-4o
+OPENROUTER_EMBEDDING_MODEL=openai/text-embedding-3-small
 ```
+
+Default is `LLM_PROVIDER=mock` (works offline).
+
+## Vector store
+
+```
+VECTOR_BACKEND=memory   # default
+VECTOR_BACKEND=qdrant   # requires Qdrant
+QDRANT_URL=http://localhost:6333
+```
+
+```bash
+docker compose up -d postgres qdrant
+```
+
+## API docs
+
+http://127.0.0.1:8000/docs
 
 ## Disclaimer
 
-This is a demonstration platform. AI outputs require physician review and do not replace clinical judgment.
+Demonstration platform only. AI outputs require physician review and do not replace clinical judgment.

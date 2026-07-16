@@ -33,7 +33,7 @@ export default function LoginPage() {
       setAuth(access_token, user);
       navigate('/app/dashboard');
     } catch {
-      setError('Invalid credentials. Use doctor@longcare.ca / demo1234');
+      setError('Invalid credentials. Try doctor@ / nurse@ / admin@longcare.ca with demo1234');
     } finally {
       setLoading(false);
     }
@@ -86,7 +86,7 @@ export default function LoginPage() {
               </Button>
             </Box>
             <Alert severity="info" sx={{ mt: 3 }}>
-              Demo credentials: doctor@longcare.ca / demo1234
+              Demo: doctor@ / nurse@ / admin@longcare.ca — password demo1234
             </Alert>
           </CardContent>
         </Card>

@@ -40,7 +40,7 @@ export default function DiagnosisPage() {
         labs: wbc ? { WBC: parseFloat(wbc) } : {},
       });
       setLastDiagnosis(result);
-      if (result.id) setEncounterId(result.id);
+      if (result.encounter_id) setEncounterId(result.encounter_id);
     } catch {
       setError('Diagnosis failed. Ensure the backend is running.');
     } finally {
@@ -48,9 +48,9 @@ export default function DiagnosisPage() {
     }
   };
 
-  const approve = async () => {
+  const approve = async (approved: boolean) => {
     if (lastDiagnosis?.id) {
-      await diagnosisApi.approve(lastDiagnosis.id);
+      await diagnosisApi.approve(lastDiagnosis.id, approved);
     }
   };
 
@@ -169,10 +169,13 @@ export default function DiagnosisPage() {
             <Button
               variant="contained"
               startIcon={<CheckCircleIcon />}
-              onClick={approve}
-              sx={{ mt: 2 }}
+              onClick={() => approve(true)}
+              sx={{ mt: 2, mr: 1 }}
             >
               Approve Diagnosis
+            </Button>
+            <Button variant="outlined" color="error" onClick={() => approve(false)} sx={{ mt: 2 }}>
+              Reject
             </Button>
           </CardContent>
         </Card>

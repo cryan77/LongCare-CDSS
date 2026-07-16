@@ -1,8 +1,8 @@
 from app.rag.vector_store import vector_store
 
 
-def retrieve_evidence(query: str, disease: str | None = None, top_k: int = 3) -> list[dict]:
-    return vector_store.search(query, top_k=top_k, disease=disease)
+async def retrieve_evidence(query: str, disease: str | None = None, top_k: int = 3) -> list[dict]:
+    return await vector_store.search(query, top_k=top_k, disease=disease)
 
 
 def format_citations(docs: list[dict]) -> list[dict]:

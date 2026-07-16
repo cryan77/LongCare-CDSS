@@ -1,12 +1,12 @@
-import asyncio
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.api import auth, chat, diagnosis, documentation, patient, treatment
+from app.api import auth, chat, diagnosis, documentation, images, patient, treatment
 from app.config import settings
 from app.database.session import init_db
+from app.rag.ingest import ingest_guidelines
 from app.seed import seed_database
 
 
@@ -14,13 +14,17 @@ from app.seed import seed_database
 async def lifespan(app: FastAPI):
     await init_db()
     await seed_database()
+    try:
+        await ingest_guidelines()
+    except Exception:
+        pass
     yield
 
 
 app = FastAPI(
     title="LongCare AI-CDSS",
     description="AI-Powered Clinical Decision Support System",
-    version="2.0.0",
+    version="2.1.0",
     lifespan=lifespan,
 )
 
@@ -38,17 +42,25 @@ app.include_router(diagnosis.router, prefix="/api/v1")
 app.include_router(treatment.router, prefix="/api/v1")
 app.include_router(chat.router, prefix="/api/v1")
 app.include_router(documentation.router, prefix="/api/v1")
+app.include_router(images.router, prefix="/api/v1")
 
 
 @app.get("/health")
 async def health():
-    return {"status": "healthy", "service": "longcare-cdss"}
+    return {
+        "status": "healthy",
+        "service": "longcare-cdss",
+        "llm_provider": settings.llm_provider,
+        "vector_backend": settings.vector_backend,
+    }
 
 
 @app.get("/api/v1/stats")
 async def stats():
     return {
-        "agents": ["diagnosis", "treatment", "knowledge", "documentation"],
+        "agents": ["diagnosis", "treatment", "knowledge", "documentation", "safety"],
         "rag_sources": ["WHO", "NICE", "AHA", "ADA", "ESC", "GOLD", "IDSA"],
         "llm_provider": settings.llm_provider,
+        "vector_backend": settings.vector_backend,
+        "openrouter_configured": settings.use_openrouter,
     }

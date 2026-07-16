@@ -84,6 +84,7 @@ class DiagnosisItem(BaseModel):
 
 class DiagnosisResponse(BaseModel):
     id: int | None = None
+    encounter_id: int | None = None
     diagnosis: list[DiagnosisItem]
     differential: list[str]
     reasoning: str

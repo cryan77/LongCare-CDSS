@@ -6,7 +6,7 @@ from app.agents.treatment_agent import run_treatment_agent
 from app.database.models import Diagnosis, Patient, Treatment, User
 from app.database.session import get_db
 from app.models.schemas import ApprovalRequest, TreatmentRequest, TreatmentResponse
-from app.security.auth import get_current_user
+from app.security.rbac import require_doctor
 
 router = APIRouter(prefix="/treatment", tags=["treatment"])
 
@@ -15,7 +15,7 @@ router = APIRouter(prefix="/treatment", tags=["treatment"])
 async def recommend_treatment(
     req: TreatmentRequest,
     db: AsyncSession = Depends(get_db),
-    _: User = Depends(get_current_user),
+    _: User = Depends(require_doctor),
 ):
     result = await db.execute(select(Patient).where(Patient.id == req.patient_id))
     patient = result.scalar_one_or_none()
@@ -39,9 +39,11 @@ async def recommend_treatment(
         "age": patient.age,
         "gender": patient.gender,
         "allergies": patient.allergies,
+        "medical_history": patient.medical_history,
     }
-    output = run_treatment_agent(diagnosis_name, patient_dict)
+    output = await run_treatment_agent(diagnosis_name, patient_dict)
 
+    treatment_ids: list[int] = []
     if diagnosis_id:
         for med in output["medications"]:
             tx = Treatment(
@@ -53,9 +55,11 @@ async def recommend_treatment(
                 warnings=output["warnings"],
             )
             db.add(tx)
+            await db.flush()
+            treatment_ids.append(tx.id)
         await db.commit()
 
-    return TreatmentResponse(**output)
+    return TreatmentResponse(id=treatment_ids[0] if treatment_ids else None, **output)
 
 
 @router.patch("/{treatment_id}/approve")
@@ -63,7 +67,7 @@ async def approve_treatment(
     treatment_id: int,
     req: ApprovalRequest,
     db: AsyncSession = Depends(get_db),
-    _: User = Depends(get_current_user),
+    _: User = Depends(require_doctor),
 ):
     result = await db.execute(select(Treatment).where(Treatment.id == treatment_id))
     tx = result.scalar_one_or_none()

@@ -17,6 +17,13 @@ interface ClinicalState {
   setLastTreatment: (t: TreatmentResult | null) => void;
   encounterId: number | null;
   setEncounterId: (id: number | null) => void;
+  lastDocumentId: number | null;
+  setLastDocumentId: (id: number | null) => void;
+  treatmentIds: number[];
+  setTreatmentIds: (ids: number[]) => void;
+  workflowResult: Record<string, unknown> | null;
+  setWorkflowResult: (r: Record<string, unknown> | null) => void;
+  resetClinical: () => void;
 }
 
 export const useAuthStore = create<AuthState>((set) => ({
@@ -32,13 +39,29 @@ export const useAuthStore = create<AuthState>((set) => ({
   },
 }));
 
+const clinicalDefaults = {
+  selectedPatient: null as Patient | null,
+  lastDiagnosis: null as DiagnosisResult | null,
+  lastTreatment: null as TreatmentResult | null,
+  encounterId: null as number | null,
+  lastDocumentId: null as number | null,
+  treatmentIds: [] as number[],
+  workflowResult: null as Record<string, unknown> | null,
+};
+
 export const useClinicalStore = create<ClinicalState>((set) => ({
-  selectedPatient: null,
+  ...clinicalDefaults,
   setSelectedPatient: (p) => set({ selectedPatient: p }),
-  lastDiagnosis: null,
   setLastDiagnosis: (d) => set({ lastDiagnosis: d }),
-  lastTreatment: null,
   setLastTreatment: (t) => set({ lastTreatment: t }),
-  encounterId: null,
   setEncounterId: (id) => set({ encounterId: id }),
+  setLastDocumentId: (id) => set({ lastDocumentId: id }),
+  setTreatmentIds: (ids) => set({ treatmentIds: ids }),
+  setWorkflowResult: (r) =>
+    set({
+      workflowResult: r,
+      lastDocumentId: (r?.document_id as number) ?? null,
+      treatmentIds: (r?.treatment_ids as number[]) ?? [],
+    }),
+  resetClinical: () => set({ ...clinicalDefaults }),
 }));

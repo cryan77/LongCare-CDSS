@@ -13,18 +13,26 @@ import {
   TableHead,
   TableRow,
   Chip,
+  TextField,
+  Stack,
 } from '@mui/material';
 import WarningAmberIcon from '@mui/icons-material/WarningAmber';
+import CheckCircleIcon from '@mui/icons-material/CheckCircle';
+import CancelIcon from '@mui/icons-material/Cancel';
 import { treatmentApi } from '../api/client';
 import { useClinicalStore } from '../store';
 
 export default function TreatmentPage() {
-  const { selectedPatient, lastDiagnosis, lastTreatment, setLastTreatment } = useClinicalStore();
+  const { selectedPatient, lastDiagnosis, lastTreatment, setLastTreatment, treatmentIds } =
+    useClinicalStore();
   const [loading, setLoading] = useState(false);
+  const [status, setStatus] = useState('');
+  const [editNote, setEditNote] = useState('');
 
   const runTreatment = async () => {
     if (!selectedPatient) return;
     setLoading(true);
+    setStatus('');
     try {
       const diagnosisName = lastDiagnosis?.diagnosis[0]?.name ?? 'Pneumonia';
       const result = await treatmentApi.recommend({
@@ -36,6 +44,20 @@ export default function TreatmentPage() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const approveAll = async (approved: boolean) => {
+    const ids = treatmentIds.length
+      ? treatmentIds
+      : lastTreatment?.ids ?? (lastTreatment?.id ? [lastTreatment.id] : []);
+    if (!ids.length) {
+      setStatus('No treatment IDs to approve. Run CDSS workflow first.');
+      return;
+    }
+    for (const id of ids) {
+      await treatmentApi.approve(id, approved, editNote ? { note: editNote } : undefined);
+    }
+    setStatus(approved ? 'Treatment approved' : 'Treatment rejected');
   };
 
   return (
@@ -105,6 +127,40 @@ export default function TreatmentPage() {
             {lastTreatment.guidelines.map((g, i) => (
               <Chip key={i} label={g.source} size="small" sx={{ mr: 0.5 }} variant="outlined" />
             ))}
+
+            <TextField
+              fullWidth
+              label="Physician edit / note (optional)"
+              value={editNote}
+              onChange={(e) => setEditNote(e.target.value)}
+              margin="normal"
+              multiline
+              minRows={2}
+            />
+
+            <Stack direction="row" spacing={1} sx={{ mt: 2 }}>
+              <Button
+                variant="contained"
+                startIcon={<CheckCircleIcon />}
+                onClick={() => approveAll(true)}
+              >
+                Approve
+              </Button>
+              <Button
+                variant="outlined"
+                color="error"
+                startIcon={<CancelIcon />}
+                onClick={() => approveAll(false)}
+              >
+                Reject
+              </Button>
+            </Stack>
+
+            {status && (
+              <Alert severity="success" sx={{ mt: 2 }}>
+                {status}
+              </Alert>
+            )}
 
             <Alert severity="info" sx={{ mt: 3 }}>
               Safety checks: allergy screened, interactions screened, contraindications checked.

@@ -1,0 +1,112 @@
+[
+  {
+    "id": "amoxicillin",
+    "name": "Amoxicillin",
+    "rxnorm": "723",
+    "category": "penicillin",
+    "indications": ["pneumonia", "community acquired pneumonia", "uti"],
+    "dose": "500mg-1g",
+    "frequency": "TID",
+    "duration": "5-7 days",
+    "allergy_tags": ["penicillin"]
+  },
+  {
+    "id": "azithromycin",
+    "name": "Azithromycin",
+    "rxnorm": "18631",
+    "category": "macrolide",
+    "indications": ["pneumonia", "community acquired pneumonia", "copd"],
+    "dose": "500mg",
+    "frequency": "Day 1, then 250mg daily",
+    "duration": "5 days",
+    "allergy_tags": ["macrolide"]
+  },
+  {
+    "id": "nitrofurantoin",
+    "name": "Nitrofurantoin",
+    "rxnorm": "7396",
+    "category": "nitrofuran",
+    "indications": ["uti"],
+    "dose": "100mg",
+    "frequency": "BID",
+    "duration": "5 days",
+    "allergy_tags": []
+  },
+  {
+    "id": "lisinopril",
+    "name": "Lisinopril",
+    "rxnorm": "29046",
+    "category": "ace_inhibitor",
+    "indications": ["hypertension"],
+    "dose": "10mg",
+    "frequency": "Daily",
+    "duration": "Ongoing",
+    "allergy_tags": ["ace inhibitor"]
+  },
+  {
+    "id": "amlodipine",
+    "name": "Amlodipine",
+    "rxnorm": "17767",
+    "category": "ccb",
+    "indications": ["hypertension"],
+    "dose": "5mg",
+    "frequency": "Daily",
+    "duration": "Ongoing",
+    "allergy_tags": []
+  },
+  {
+    "id": "metformin",
+    "name": "Metformin",
+    "rxnorm": "6809",
+    "category": "biguanide",
+    "indications": ["diabetes"],
+    "dose": "500mg",
+    "frequency": "BID with meals",
+    "duration": "Ongoing",
+    "allergy_tags": []
+  },
+  {
+    "id": "albuterol",
+    "name": "Albuterol",
+    "rxnorm": "435",
+    "category": "saba",
+    "indications": ["copd", "asthma"],
+    "dose": "2 puffs",
+    "frequency": "Q4-6H PRN",
+    "duration": "As needed",
+    "allergy_tags": []
+  },
+  {
+    "id": "prednisone",
+    "name": "Prednisone",
+    "rxnorm": "8638",
+    "category": "corticosteroid",
+    "indications": ["copd"],
+    "dose": "40mg",
+    "frequency": "Daily",
+    "duration": "5 days",
+    "allergy_tags": []
+  },
+  {
+    "id": "apixaban",
+    "name": "Apixaban",
+    "rxnorm": "1364430",
+    "category": "doac",
+    "indications": ["atrial fibrillation"],
+    "dose": "5mg",
+    "frequency": "BID",
+    "duration": "Ongoing",
+    "allergy_tags": []
+  },
+  {
+    "id": "doxycycline",
+    "name": "Doxycycline",
+    "rxnorm": "3640",
+    "category": "tetracycline",
+    "indications": ["pneumonia", "community acquired pneumonia"],
+    "dose": "100mg",
+    "frequency": "BID",
+    "duration": "5-7 days",
+    "allergy_tags": ["tetracycline"]
+  }
+]

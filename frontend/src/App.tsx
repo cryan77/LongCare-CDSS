@@ -13,6 +13,10 @@ import DiagnosisPage from './pages/DiagnosisPage';
 import TreatmentPage from './pages/TreatmentPage';
 import ChatPage from './pages/ChatPage';
 import DocumentationPage from './pages/DocumentationPage';
+import WorkflowPage from './pages/WorkflowPage';
+import TimelinePage from './pages/TimelinePage';
+import ImagingPage from './pages/ImagingPage';
+import { AuthBootstrap } from './components/AuthBootstrap';
 
 const queryClient = new QueryClient();
 
@@ -34,6 +38,7 @@ export default function App() {
       <ThemeProvider theme={theme}>
         <CssBaseline />
         <BrowserRouter>
+          <AuthBootstrap />
           <Routes>
             <Route
               path="/"
@@ -55,6 +60,9 @@ export default function App() {
               <Route index element={<Navigate to="dashboard" replace />} />
               <Route path="dashboard" element={<DashboardPage />} />
               <Route path="patients" element={<PatientsPage />} />
+              <Route path="workflow" element={<WorkflowPage />} />
+              <Route path="timeline" element={<TimelinePage />} />
+              <Route path="imaging" element={<ImagingPage />} />
               <Route path="diagnosis" element={<DiagnosisPage />} />
               <Route path="treatment" element={<TreatmentPage />} />
               <Route path="chat" element={<ChatPage />} />

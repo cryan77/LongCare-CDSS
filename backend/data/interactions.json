@@ -1,0 +1,9 @@
+[
+  {"pair": ["warfarin", "aspirin"], "warning": "Increased bleeding risk — monitor INR closely"},
+  {"pair": ["warfarin", "ibuprofen"], "warning": "NSAID increases anticoagulant effect"},
+  {"pair": ["metformin", "contrast dye"], "warning": "Risk of lactic acidosis — hold metformin"},
+  {"pair": ["lisinopril", "potassium"], "warning": "Hyperkalemia risk"},
+  {"pair": ["amoxicillin", "warfarin"], "warning": "May potentiate anticoagulation"},
+  {"pair": ["apixaban", "aspirin"], "warning": "Additive bleeding risk"},
+  {"pair": ["azithromycin", "amiodarone"], "warning": "QT prolongation risk"}
+]

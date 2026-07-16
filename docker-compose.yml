@@ -1,13 +1,37 @@
 services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: longcare
+      POSTGRES_PASSWORD: longcare
+      POSTGRES_DB: longcare
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+  qdrant:
+    image: qdrant/qdrant:v1.12.5
+    ports:
+      - "6333:6333"
+    volumes:
+      - qdrantdata:/qdrant/storage
+
   backend:
     build: ./backend
     ports:
       - "8000:8000"
     environment:
-      - DATABASE_URL=sqlite+aiosqlite:///./longcare.db
-      - CORS_ORIGINS=http://localhost:5173
+      - DATABASE_URL=postgresql+asyncpg://longcare:longcare@postgres:5432/longcare
+      - CORS_ORIGINS=http://localhost:5173,http://127.0.0.1:5173
+      - LLM_PROVIDER=mock
+      - VECTOR_BACKEND=qdrant
+      - QDRANT_URL=http://qdrant:6333
     volumes:
       - ./backend:/app
+    depends_on:
+      - postgres
+      - qdrant
 
   frontend:
     build: ./frontend
@@ -17,3 +41,7 @@ services:
       - VITE_API_URL=http://localhost:8000/api/v1
     depends_on:
       - backend
+
+volumes:
+  pgdata:
+  qdrantdata:

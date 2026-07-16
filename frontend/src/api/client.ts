@@ -29,6 +29,7 @@ export interface Patient {
 
 export interface DiagnosisResult {
   id?: number;
+  encounter_id?: number;
   diagnosis: { name: string; probability: number }[];
   differential: string[];
   reasoning: string;
@@ -38,6 +39,8 @@ export interface DiagnosisResult {
 }
 
 export interface TreatmentResult {
+  id?: number;
+  ids?: number[];
   medications: { name: string; dose: string; frequency: string; duration?: string }[];
   warnings: string[];
   guidelines: { source: string; excerpt: string }[];
@@ -65,16 +68,29 @@ export const patientsApi = {
 };
 
 export const diagnosisApi = {
-  run: (payload: { patient_id: number; symptoms: string[]; labs?: Record<string, number>; encounter_id?: number }) =>
-    api.post<DiagnosisResult>('/diagnosis', payload).then((r) => r.data),
-  workflow: (payload: { patient_id: number; symptoms: string[]; labs?: Record<string, number> }) =>
-    api.post('/diagnosis/workflow', payload).then((r) => r.data),
-  approve: (id: number) => api.patch(`/diagnosis/${id}/approve`, { approved: true }).then((r) => r.data),
+  run: (payload: {
+    patient_id: number;
+    symptoms: string[];
+    labs?: Record<string, number>;
+    encounter_id?: number;
+    images?: string[];
+  }) => api.post<DiagnosisResult>('/diagnosis', payload).then((r) => r.data),
+  workflow: (payload: {
+    patient_id: number;
+    symptoms: string[];
+    labs?: Record<string, number>;
+    encounter_id?: number;
+    images?: string[];
+  }) => api.post('/diagnosis/workflow', payload).then((r) => r.data),
+  approve: (id: number, approved = true, edits?: Record<string, unknown>) =>
+    api.patch(`/diagnosis/${id}/approve`, { approved, edits }).then((r) => r.data),
 };
 
 export const treatmentApi = {
   recommend: (payload: { patient_id: number; diagnosis_name?: string; diagnosis_id?: number }) =>
     api.post<TreatmentResult>('/treatment', payload).then((r) => r.data),
+  approve: (id: number, approved = true, edits?: Record<string, unknown>) =>
+    api.patch(`/treatment/${id}/approve`, { approved, edits }).then((r) => r.data),
 };
 
 export const chatApi = {
@@ -86,4 +102,21 @@ export const chatApi = {
 export const docsApi = {
   generate: (encounterId: number, docType = 'soap') =>
     api.post('/documentation', { encounter_id: encounterId, doc_type: docType }).then((r) => r.data),
+  approve: (id: number, approved = true, edits?: Record<string, unknown>) =>
+    api.patch(`/documentation/${id}/approve`, { approved, edits }).then((r) => r.data),
+  pdf: (docId: number) =>
+    api.get(`/documentation/${docId}/pdf`, { responseType: 'blob' }).then((r) => r.data),
+};
+
+export const timelineApi = {
+  get: (patientId: number) => api.get(`/patients/${patientId}/timeline`).then((r) => r.data),
+};
+
+export const imagingApi = {
+  analyze: (formData: FormData) =>
+    api
+      .post('/images/analyze', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      })
+      .then((r) => r.data),
 };
