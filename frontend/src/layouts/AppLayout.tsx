@@ -14,6 +14,9 @@ import {
   Badge,
   Avatar,
   Chip,
+  Menu,
+  MenuItem,
+  Divider,
 } from '@mui/material';
 import DashboardIcon from '@mui/icons-material/Dashboard';
 import PeopleIcon from '@mui/icons-material/People';
@@ -32,6 +35,8 @@ import NotificationsNoneIcon from '@mui/icons-material/NotificationsNone';
 import ExpandLess from '@mui/icons-material/ExpandLess';
 import ExpandMore from '@mui/icons-material/ExpandMore';
 import LocalHospitalIcon from '@mui/icons-material/LocalHospital';
+import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
+import PersonOutlinedIcon from '@mui/icons-material/PersonOutlined';
 import { useMemo, useState } from 'react';
 import { useAuthStore, useClinicalStore } from '../store';
 
@@ -94,6 +99,7 @@ export default function AppLayout() {
   const navigate = useNavigate();
   const location = useLocation();
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [userMenuAnchor, setUserMenuAnchor] = useState<null | HTMLElement>(null);
   const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({
     Patients: true,
     'Clinical AI': true,
@@ -112,6 +118,13 @@ export default function AppLayout() {
 
   const toggleGroup = (label: string) =>
     setOpenGroups((prev) => ({ ...prev, [label]: !prev[label] }));
+
+  const handleLogout = () => {
+    setUserMenuAnchor(null);
+    logout();
+    resetClinical();
+    navigate('/');
+  };
 
   const drawer = (
     <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
@@ -178,24 +191,10 @@ export default function AppLayout() {
             </Box>
           );
         })}
-
-        <ListItemButton
-          onClick={() => {
-            logout();
-            resetClinical();
-            navigate('/');
-          }}
-          sx={{ borderRadius: 2, mt: 2 }}
-        >
-          <ListItemIcon sx={{ minWidth: 40 }}>
-            <LogoutIcon />
-          </ListItemIcon>
-          <ListItemText primary="Logout" />
-        </ListItemButton>
       </List>
 
       {selectedPatient && (
-        <Box sx={{ p: 2, borderTop: '1px solid', borderColor: 'divider', bgcolor: 'primary.50', background: 'rgba(26,79,140,0.04)' }}>
+        <Box sx={{ p: 2, borderTop: '1px solid', borderColor: 'divider', background: 'rgba(26,79,140,0.04)' }}>
           <Typography variant="caption" color="text.secondary" sx={{ display: 'block' }}>
             Active patient
           </Typography>
@@ -254,7 +253,25 @@ export default function AppLayout() {
             </Badge>
           </IconButton>
 
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+          <Box
+            onClick={(e) => setUserMenuAnchor(e.currentTarget)}
+            sx={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 1,
+              cursor: 'pointer',
+              px: 1,
+              py: 0.5,
+              borderRadius: 2,
+              border: '1px solid',
+              borderColor: 'divider',
+              bgcolor: 'background.paper',
+              '&:hover': { bgcolor: 'action.hover' },
+            }}
+            aria-controls={userMenuAnchor ? 'user-menu' : undefined}
+            aria-haspopup="true"
+            aria-expanded={userMenuAnchor ? 'true' : undefined}
+          >
             <Avatar sx={{ width: 34, height: 34, bgcolor: 'primary.main', fontSize: 14 }}>
               {(user?.full_name || 'D')
                 .split(' ')
@@ -270,7 +287,40 @@ export default function AppLayout() {
                 {user?.role}
               </Typography>
             </Box>
+            <KeyboardArrowDownIcon sx={{ fontSize: 18, color: 'text.secondary' }} />
           </Box>
+
+          <Menu
+            id="user-menu"
+            anchorEl={userMenuAnchor}
+            open={Boolean(userMenuAnchor)}
+            onClose={() => setUserMenuAnchor(null)}
+            anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+            transformOrigin={{ vertical: 'top', horizontal: 'right' }}
+            slotProps={{ paper: { sx: { minWidth: 200, mt: 1 } } }}
+          >
+            <Box sx={{ px: 2, py: 1.25 }}>
+              <Typography variant="body2" sx={{ fontWeight: 700 }}>
+                {user?.full_name}
+              </Typography>
+              <Typography variant="caption" color="text.secondary">
+                {user?.email || user?.role}
+              </Typography>
+            </Box>
+            <Divider />
+            <MenuItem disabled>
+              <ListItemIcon>
+                <PersonOutlinedIcon fontSize="small" />
+              </ListItemIcon>
+              Profile
+            </MenuItem>
+            <MenuItem onClick={handleLogout}>
+              <ListItemIcon>
+                <LogoutIcon fontSize="small" />
+              </ListItemIcon>
+              Logout
+            </MenuItem>
+          </Menu>
         </Toolbar>
       </AppBar>
 

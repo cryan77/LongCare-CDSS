@@ -47,7 +47,9 @@ export default function PatientWorkspacePage() {
     conditions?: string[];
     medications?: string[];
     labs?: Record<string, number | string>;
-    prior_encounters?: { date?: string; complaint?: string }[];
+    prior_encounters?: { date?: string; complaint?: string; provider?: string }[];
+    social_history?: { smoking?: string; alcohol?: string; occupation?: string };
+    family_history?: string[];
   };
 
   const tabs = ['Overview', 'History', 'Labs', 'Imaging', 'AI Analysis', 'Reports'];
@@ -132,12 +134,55 @@ export default function PatientWorkspacePage() {
                     </Typography>
                     <Typography variant="body2" color="text.secondary">
                       {v.complaint}
+                      {v.provider ? ` · ${v.provider}` : ''}
                     </Typography>
                   </Box>
                 ))
               ) : (
                 <Typography variant="body2" color="text.secondary">
                   No prior visits listed.
+                </Typography>
+              )}
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent>
+              <Typography variant="h5" color="text.secondary" gutterBottom>
+                Social History
+              </Typography>
+              {history.social_history ? (
+                <>
+                  <Typography variant="body2" sx={{ mb: 0.5 }}>
+                    Smoking: {history.social_history.smoking || '—'}
+                  </Typography>
+                  <Typography variant="body2" sx={{ mb: 0.5 }}>
+                    Alcohol: {history.social_history.alcohol || '—'}
+                  </Typography>
+                  <Typography variant="body2">
+                    Occupation: {history.social_history.occupation || '—'}
+                  </Typography>
+                </>
+              ) : (
+                <Typography variant="body2" color="text.secondary">
+                  Not recorded.
+                </Typography>
+              )}
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent>
+              <Typography variant="h5" color="text.secondary" gutterBottom>
+                Family History
+              </Typography>
+              {(history.family_history || []).length ? (
+                (history.family_history || []).map((f) => (
+                  <Typography key={f} variant="body2" sx={{ mb: 0.5 }}>
+                    • {f}
+                  </Typography>
+                ))
+              ) : (
+                <Typography variant="body2" color="text.secondary">
+                  Not recorded.
                 </Typography>
               )}
             </CardContent>

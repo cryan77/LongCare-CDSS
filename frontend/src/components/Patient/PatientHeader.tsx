@@ -1,6 +1,7 @@
 import { Box, Chip, Typography } from '@mui/material';
 import WarningAmberIcon from '@mui/icons-material/WarningAmber';
 import type { Patient } from '../../api/client';
+import PatientAvatar from './PatientAvatar';
 
 type Props = {
   patient: Patient;
@@ -23,13 +24,19 @@ export default function PatientHeader({ patient }: Props) {
         alignItems: 'center',
       }}
     >
-      <Box>
-        <Typography variant="h3" color="primary.dark">
-          {patient.first_name} {patient.last_name}
-        </Typography>
-        <Typography variant="body2" color="text.secondary">
-          {patient.age} years · {patient.gender} · MRN {patient.mrn}
-        </Typography>
+      <Box sx={{ display: 'flex', gap: 1.75, alignItems: 'center' }}>
+        <PatientAvatar patient={patient} size={72} />
+        <Box>
+          <Typography variant="h3" color="primary.dark">
+            {patient.first_name} {patient.last_name}
+          </Typography>
+          <Typography variant="body2" color="text.secondary">
+            {patient.age} years · {patient.gender} · MRN {patient.mrn}
+          </Typography>
+          <Typography variant="caption" color="text.secondary">
+            Generated clinical demo profile
+          </Typography>
+        </Box>
       </Box>
       <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap', alignItems: 'center' }}>
         {patient.allergies.length > 0 ? (
