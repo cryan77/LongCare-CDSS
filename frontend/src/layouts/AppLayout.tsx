@@ -24,10 +24,8 @@ import BiotechIcon from '@mui/icons-material/Biotech';
 import MedicationIcon from '@mui/icons-material/Medication';
 import ChatIcon from '@mui/icons-material/Chat';
 import DescriptionIcon from '@mui/icons-material/Description';
-import AccountTreeIcon from '@mui/icons-material/AccountTree';
 import LogoutIcon from '@mui/icons-material/Logout';
 import MenuIcon from '@mui/icons-material/Menu';
-import TimelineIcon from '@mui/icons-material/Timeline';
 import ImageIcon from '@mui/icons-material/Image';
 import MenuBookIcon from '@mui/icons-material/MenuBook';
 import AdminPanelSettingsIcon from '@mui/icons-material/AdminPanelSettings';
@@ -37,60 +35,31 @@ import ExpandMore from '@mui/icons-material/ExpandMore';
 import LocalHospitalIcon from '@mui/icons-material/LocalHospital';
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 import PersonOutlinedIcon from '@mui/icons-material/PersonOutlined';
+import MonitorHeartIcon from '@mui/icons-material/MonitorHeart';
+import AssignmentIcon from '@mui/icons-material/Assignment';
+import FavoriteIcon from '@mui/icons-material/Favorite';
+import EventIcon from '@mui/icons-material/Event';
 import { useMemo, useState } from 'react';
 import { useAuthStore, useClinicalStore } from '../store';
+import { homePathForRole, navForRole, portalLabel, type NavGroup } from '../roles';
 
 const DRAWER_WIDTH = 280;
 
-type NavChild = { label: string; path: string; icon?: React.ReactNode };
-type NavGroup = {
-  label: string;
-  icon: React.ReactNode;
-  path?: string;
-  children?: NavChild[];
+const iconMap: Record<NavGroup['icon'], React.ReactNode> = {
+  dashboard: <DashboardIcon />,
+  people: <PeopleIcon />,
+  ai: <BiotechIcon />,
+  imaging: <ImageIcon />,
+  knowledge: <MenuBookIcon />,
+  reports: <DescriptionIcon />,
+  admin: <AdminPanelSettingsIcon />,
+  vitals: <MonitorHeartIcon />,
+  meds: <MedicationIcon />,
+  tasks: <AssignmentIcon />,
+  messages: <ChatIcon />,
+  health: <FavoriteIcon />,
+  appointments: <EventIcon />,
 };
-
-const navGroups: NavGroup[] = [
-  { label: 'Dashboard', path: '/app/dashboard', icon: <DashboardIcon /> },
-  {
-    label: 'Patients',
-    icon: <PeopleIcon />,
-    children: [
-      { label: 'Patient List', path: '/app/patients', icon: <PeopleIcon /> },
-      { label: 'Patient Workspace', path: '/app/workspace', icon: <TimelineIcon /> },
-    ],
-  },
-  {
-    label: 'Clinical AI',
-    icon: <BiotechIcon />,
-    children: [
-      { label: 'Run CDSS', path: '/app/workflow', icon: <AccountTreeIcon /> },
-      { label: 'Diagnosis', path: '/app/diagnosis', icon: <BiotechIcon /> },
-      { label: 'Treatment', path: '/app/treatment', icon: <MedicationIcon /> },
-      { label: 'Medical Chat', path: '/app/chat', icon: <ChatIcon /> },
-    ],
-  },
-  {
-    label: 'Medical Imaging',
-    icon: <ImageIcon />,
-    children: [{ label: 'X-Ray Analysis', path: '/app/imaging', icon: <ImageIcon /> }],
-  },
-  {
-    label: 'Knowledge Base',
-    icon: <MenuBookIcon />,
-    children: [{ label: 'Search Guidelines', path: '/app/knowledge', icon: <MenuBookIcon /> }],
-  },
-  {
-    label: 'Reports',
-    icon: <DescriptionIcon />,
-    children: [{ label: 'SOAP / Discharge', path: '/app/documentation', icon: <DescriptionIcon /> }],
-  },
-  {
-    label: 'Administration',
-    icon: <AdminPanelSettingsIcon />,
-    children: [{ label: 'Users & Audit', path: '/app/admin', icon: <AdminPanelSettingsIcon /> }],
-  },
-];
 
 export default function AppLayout() {
   const { token, logout, user } = useAuthStore();
@@ -100,10 +69,9 @@ export default function AppLayout() {
   const location = useLocation();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [userMenuAnchor, setUserMenuAnchor] = useState<null | HTMLElement>(null);
-  const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({
-    Patients: true,
-    'Clinical AI': true,
-  });
+  const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({});
+
+  const navGroups = useMemo(() => navForRole(user?.role), [user?.role]);
 
   const greeting = useMemo(() => {
     const hour = new Date().getHours();
@@ -116,8 +84,13 @@ export default function AppLayout() {
     return <Navigate to="/app/login" replace />;
   }
 
+  // Redirect away from wrong-role default if somehow on /app without role home
+  if (user && location.pathname === '/app') {
+    return <Navigate to={homePathForRole(user.role)} replace />;
+  }
+
   const toggleGroup = (label: string) =>
-    setOpenGroups((prev) => ({ ...prev, [label]: !prev[label] }));
+    setOpenGroups((prev) => ({ ...prev, [label]: !(prev[label] ?? true) }));
 
   const handleLogout = () => {
     setUserMenuAnchor(null);
@@ -135,7 +108,7 @@ export default function AppLayout() {
             LongCare
           </Typography>
           <Typography variant="caption" color="text.secondary">
-            AI-CDSS Clinical
+            {portalLabel(user?.role)}
           </Typography>
         </Box>
       </Toolbar>
@@ -154,21 +127,18 @@ export default function AppLayout() {
                 }}
                 sx={{ borderRadius: 2, mb: 0.5 }}
               >
-                <ListItemIcon sx={{ color: 'primary.main', minWidth: 40 }}>{group.icon}</ListItemIcon>
+                <ListItemIcon sx={{ color: 'primary.main', minWidth: 40 }}>{iconMap[group.icon]}</ListItemIcon>
                 <ListItemText primary={group.label} />
               </ListItemButton>
             );
           }
 
-          const open = openGroups[group.label] ?? false;
+          const open = openGroups[group.label] ?? true;
           return (
             <Box key={group.label}>
               <ListItemButton onClick={() => toggleGroup(group.label)} sx={{ borderRadius: 2, mb: 0.25 }}>
-                <ListItemIcon sx={{ color: 'primary.main', minWidth: 40 }}>{group.icon}</ListItemIcon>
-                <ListItemText
-                  primary={group.label}
-                  slotProps={{ primary: { sx: { fontWeight: 650 } } }}
-                />
+                <ListItemIcon sx={{ color: 'primary.main', minWidth: 40 }}>{iconMap[group.icon]}</ListItemIcon>
+                <ListItemText primary={group.label} slotProps={{ primary: { sx: { fontWeight: 650 } } }} />
                 {open ? <ExpandLess /> : <ExpandMore />}
               </ListItemButton>
               <Collapse in={open} timeout="auto" unmountOnExit>
@@ -193,7 +163,7 @@ export default function AppLayout() {
         })}
       </List>
 
-      {selectedPatient && (
+      {selectedPatient && user?.role !== 'admin' && user?.role !== 'patient' && (
         <Box sx={{ p: 2, borderTop: '1px solid', borderColor: 'divider', background: 'rgba(26,79,140,0.04)' }}>
           <Typography variant="caption" color="text.secondary" sx={{ display: 'block' }}>
             Active patient
@@ -219,11 +189,7 @@ export default function AppLayout() {
         }}
       >
         <Toolbar sx={{ gap: 2 }}>
-          <IconButton
-            edge="start"
-            onClick={() => setMobileOpen(!mobileOpen)}
-            sx={{ display: { md: 'none' } }}
-          >
+          <IconButton edge="start" onClick={() => setMobileOpen(!mobileOpen)} sx={{ display: { md: 'none' } }}>
             <MenuIcon />
           </IconButton>
 
@@ -231,21 +197,41 @@ export default function AppLayout() {
             <LocalHospitalIcon sx={{ color: 'primary.main', display: { xs: 'none', sm: 'block' } }} />
             <Box>
               <Typography variant="body2" sx={{ fontWeight: 700 }}>
-                LongCare Clinic
+                LongCare · {portalLabel(user?.role)}
               </Typography>
               <Typography variant="caption" color="text.secondary" sx={{ display: { xs: 'none', sm: 'block' } }}>
-                {greeting}, {user?.full_name || 'Clinician'}
+                {greeting}, {user?.full_name || 'User'}
               </Typography>
             </Box>
           </Box>
 
-          <Chip
-            size="small"
-            label="Physician approval required"
-            color="warning"
-            variant="outlined"
-            sx={{ display: { xs: 'none', md: 'flex' } }}
-          />
+          {user?.role === 'doctor' && (
+            <Chip
+              size="small"
+              label="Physician approval required"
+              color="warning"
+              variant="outlined"
+              sx={{ display: { xs: 'none', md: 'flex' } }}
+            />
+          )}
+          {user?.role === 'nurse' && (
+            <Chip
+              size="small"
+              label="Care documentation"
+              color="info"
+              variant="outlined"
+              sx={{ display: { xs: 'none', md: 'flex' } }}
+            />
+          )}
+          {user?.role === 'admin' && (
+            <Chip
+              size="small"
+              label="System administration"
+              color="default"
+              variant="outlined"
+              sx={{ display: { xs: 'none', md: 'flex' } }}
+            />
+          )}
 
           <IconButton>
             <Badge color="error" variant="dot">
@@ -268,12 +254,9 @@ export default function AppLayout() {
               bgcolor: 'background.paper',
               '&:hover': { bgcolor: 'action.hover' },
             }}
-            aria-controls={userMenuAnchor ? 'user-menu' : undefined}
-            aria-haspopup="true"
-            aria-expanded={userMenuAnchor ? 'true' : undefined}
           >
             <Avatar sx={{ width: 34, height: 34, bgcolor: 'primary.main', fontSize: 14 }}>
-              {(user?.full_name || 'D')
+              {(user?.full_name || 'U')
                 .split(' ')
                 .map((p) => p[0])
                 .join('')

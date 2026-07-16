@@ -13,7 +13,7 @@ import {
 } from '@mui/material';
 import SendIcon from '@mui/icons-material/Send';
 import { chatApi } from '../api/client';
-import { useClinicalStore } from '../store';
+import { useAuthStore, useClinicalStore } from '../store';
 import PatientHeader from '../components/Patient/PatientHeader';
 
 interface Message {
@@ -23,12 +23,15 @@ interface Message {
 }
 
 export default function ChatPage() {
+  const { user } = useAuthStore();
+  const isNurse = user?.role === 'nurse';
   const { selectedPatient } = useClinicalStore();
   const [messages, setMessages] = useState<Message[]>([
     {
       role: 'assistant',
-      content:
-        'Clinical AI Assistant — ask guideline-backed questions in the context of the selected patient. Sources will be cited. Physician review required.',
+      content: isNurse
+        ? 'Care Assistant — I help with vitals trends and when to notify the physician. I cannot diagnose or prescribe.'
+        : 'Clinical AI Assistant — ask guideline-backed questions in the context of the selected patient. Sources will be cited. Physician review required.',
     },
   ]);
   const [input, setInput] = useState('');
@@ -46,7 +49,12 @@ export default function ChatPage() {
     } catch {
       setMessages((prev) => [
         ...prev,
-        { role: 'assistant', content: 'Unable to reach clinical knowledge agent.' },
+        {
+          role: 'assistant',
+          content: isNurse
+            ? 'Unable to reach care assistant. Escalate urgent concerns to the attending physician.'
+            : 'Unable to reach clinical knowledge agent.',
+        },
       ]);
     } finally {
       setLoading(false);
@@ -56,11 +64,19 @@ export default function ChatPage() {
   return (
     <Box>
       <Typography variant="h1" color="primary.dark" gutterBottom>
-        Clinical AI Assistant
+        {isNurse ? 'Care Assistant' : 'Clinical AI Assistant'}
       </Typography>
       <Typography variant="body1" color="text.secondary" sx={{ mb: 3 }}>
-        Patient-context aware Q&A with citations — not a general chatbot.
+        {isNurse
+          ? 'Simplified AI care alerts — notify physician for clinical decisions.'
+          : 'Patient-context aware Q&A with citations — not a general chatbot.'}
       </Typography>
+
+      {isNurse && (
+        <Alert severity="info" sx={{ mb: 2 }}>
+          Nurses cannot approve diagnoses or prescribe medications.
+        </Alert>
+      )}
 
       {!selectedPatient ? (
         <Alert severity="warning" sx={{ mb: 2 }}>

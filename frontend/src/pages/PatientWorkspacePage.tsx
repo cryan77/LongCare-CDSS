@@ -14,10 +14,12 @@ import {
 } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 import { timelineApi } from '../api/client';
-import { useClinicalStore } from '../store';
+import { useAuthStore, useClinicalStore } from '../store';
 import PatientHeader from '../components/Patient/PatientHeader';
 
 export default function PatientWorkspacePage() {
+  const { user } = useAuthStore();
+  const isNurse = user?.role === 'nurse';
   const { selectedPatient, setSelectedPatient } = useClinicalStore();
   const [tab, setTab] = useState(0);
   const navigate = useNavigate();
@@ -50,9 +52,12 @@ export default function PatientWorkspacePage() {
     prior_encounters?: { date?: string; complaint?: string; provider?: string }[];
     social_history?: { smoking?: string; alcohol?: string; occupation?: string };
     family_history?: string[];
+    nursing_notes?: { time?: string; note?: string }[];
   };
 
-  const tabs = ['Overview', 'History', 'Labs', 'Imaging', 'AI Analysis', 'Reports'];
+  const tabs = isNurse
+    ? ['Overview', 'History', 'Labs', 'Vitals / Notes', 'Care Alerts', 'Meds']
+    : ['Overview', 'History', 'Labs', 'Imaging', 'AI Analysis', 'Reports'];
 
   return (
     <Box>
@@ -248,15 +253,46 @@ export default function PatientWorkspacePage() {
       {tab === 3 && (
         <Card>
           <CardContent>
-            <Typography variant="h4" gutterBottom>
-              Imaging
-            </Typography>
-            <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-              Upload and analyze chest imaging for this patient.
-            </Typography>
-            <Button variant="contained" onClick={() => navigate('/app/imaging')}>
-              Open X-Ray Analysis
-            </Button>
+            {isNurse ? (
+              <>
+                <Typography variant="h4" gutterBottom>
+                  Vitals & Nursing Notes
+                </Typography>
+                <Typography variant="body2" sx={{ mb: 1 }}>
+                  BP {String(selectedPatient.vitals?.bp ?? '—')} · HR {String(selectedPatient.vitals?.hr ?? '—')} ·
+                  Temp {String(selectedPatient.vitals?.temp ?? '—')}°C · SpO₂ {String(selectedPatient.vitals?.spo2 ?? '—')}%
+                </Typography>
+                {(history.nursing_notes || []).length ? (
+                  (history.nursing_notes || []).map((n, i) => (
+                    <Box key={i} sx={{ py: 1, borderBottom: '1px solid', borderColor: 'divider' }}>
+                      <Typography variant="caption" color="text.secondary">
+                        {n.time ? new Date(n.time).toLocaleString() : ''}
+                      </Typography>
+                      <Typography variant="body2">{n.note}</Typography>
+                    </Box>
+                  ))
+                ) : (
+                  <Typography color="text.secondary" sx={{ mb: 2 }}>
+                    No nursing notes yet.
+                  </Typography>
+                )}
+                <Button variant="contained" onClick={() => navigate('/app/nurse/vitals')}>
+                  Record Vitals
+                </Button>
+              </>
+            ) : (
+              <>
+                <Typography variant="h4" gutterBottom>
+                  Imaging
+                </Typography>
+                <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                  Upload and analyze chest imaging for this patient.
+                </Typography>
+                <Button variant="contained" onClick={() => navigate('/app/imaging')}>
+                  Open X-Ray Analysis
+                </Button>
+              </>
+            )}
           </CardContent>
         </Card>
       )}
@@ -264,23 +300,40 @@ export default function PatientWorkspacePage() {
       {tab === 4 && (
         <Card>
           <CardContent>
-            <Typography variant="h4" gutterBottom>
-              AI Analysis
-            </Typography>
-            <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-              Run diagnosis and treatment agents with physician approval gates.
-            </Typography>
-            <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
-              <Button variant="contained" onClick={() => navigate('/app/workflow')}>
-                Run Full CDSS
-              </Button>
-              <Button variant="outlined" onClick={() => navigate('/app/diagnosis')}>
-                Diagnosis Workspace
-              </Button>
-              <Button variant="outlined" onClick={() => navigate('/app/treatment')}>
-                Treatment
-              </Button>
-            </Box>
+            {isNurse ? (
+              <>
+                <Typography variant="h4" gutterBottom>
+                  Care Alerts
+                </Typography>
+                <Alert severity="warning" sx={{ mb: 2 }}>
+                  Limited AI support only — notify physician for clinical decisions. Nurses cannot approve diagnoses
+                  or prescribe.
+                </Alert>
+                <Button variant="contained" onClick={() => navigate('/app/chat')}>
+                  Open Care Assistant
+                </Button>
+              </>
+            ) : (
+              <>
+                <Typography variant="h4" gutterBottom>
+                  AI Analysis
+                </Typography>
+                <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                  Run diagnosis and treatment agents with physician approval gates.
+                </Typography>
+                <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+                  <Button variant="contained" onClick={() => navigate('/app/workflow')}>
+                    Run Full CDSS
+                  </Button>
+                  <Button variant="outlined" onClick={() => navigate('/app/diagnosis')}>
+                    Diagnosis Workspace
+                  </Button>
+                  <Button variant="outlined" onClick={() => navigate('/app/treatment')}>
+                    Treatment
+                  </Button>
+                </Box>
+              </>
+            )}
           </CardContent>
         </Card>
       )}
@@ -288,15 +341,31 @@ export default function PatientWorkspacePage() {
       {tab === 5 && (
         <Card>
           <CardContent>
-            <Typography variant="h4" gutterBottom>
-              Reports
-            </Typography>
-            <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-              Generate SOAP notes and discharge summaries for review and PDF export.
-            </Typography>
-            <Button variant="contained" onClick={() => navigate('/app/documentation')}>
-              Open Documentation
-            </Button>
+            {isNurse ? (
+              <>
+                <Typography variant="h4" gutterBottom>
+                  Medications
+                </Typography>
+                <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                  Administration schedule — prescribing remains physician-only.
+                </Typography>
+                <Button variant="contained" onClick={() => navigate('/app/nurse/medications')}>
+                  Open Medication Schedule
+                </Button>
+              </>
+            ) : (
+              <>
+                <Typography variant="h4" gutterBottom>
+                  Reports
+                </Typography>
+                <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                  Generate SOAP notes and discharge summaries for review and PDF export.
+                </Typography>
+                <Button variant="contained" onClick={() => navigate('/app/documentation')}>
+                  Open Documentation
+                </Button>
+              </>
+            )}
           </CardContent>
         </Card>
       )}

@@ -8,10 +8,12 @@ from app.database.session import get_db
 from app.models.schemas import (
     EncounterCreate,
     EncounterResponse,
+    NursingNoteCreate,
     PatientCreate,
     PatientResponse,
+    VitalsUpdate,
 )
-from app.security.rbac import require_clinician, require_doctor
+from app.security.rbac import require_care_staff, require_clinician, require_doctor
 
 router = APIRouter(prefix="/patients", tags=["patients"])
 
@@ -48,6 +50,66 @@ async def get_patient(
     patient = result.scalar_one_or_none()
     if not patient:
         raise HTTPException(status_code=404, detail="Patient not found")
+    return patient
+
+
+@router.patch("/{patient_id}/vitals", response_model=PatientResponse)
+async def update_vitals(
+    patient_id: int,
+    body: VitalsUpdate,
+    db: AsyncSession = Depends(get_db),
+    _: User = Depends(require_care_staff),
+):
+    """Nurse/doctor vitals entry — core nurse workflow per role.md."""
+    result = await db.execute(select(Patient).where(Patient.id == patient_id))
+    patient = result.scalar_one_or_none()
+    if not patient:
+        raise HTTPException(status_code=404, detail="Patient not found")
+
+    vitals = dict(patient.vitals or {})
+    updates = body.model_dump(exclude_none=True)
+    notes = updates.pop("notes", None)
+    vitals.update(updates)
+    from datetime import datetime
+
+    vitals["recorded_at"] = datetime.utcnow().isoformat()
+    patient.vitals = vitals
+
+    if notes:
+        history = dict(patient.medical_history or {})
+        nursing_notes = list(history.get("nursing_notes") or [])
+        nursing_notes.insert(
+            0,
+            {"time": vitals["recorded_at"], "note": notes},
+        )
+        history["nursing_notes"] = nursing_notes[:20]
+        patient.medical_history = history
+
+    await db.commit()
+    await db.refresh(patient)
+    return patient
+
+
+@router.post("/{patient_id}/nursing-notes", response_model=PatientResponse)
+async def add_nursing_note(
+    patient_id: int,
+    body: NursingNoteCreate,
+    db: AsyncSession = Depends(get_db),
+    _: User = Depends(require_care_staff),
+):
+    result = await db.execute(select(Patient).where(Patient.id == patient_id))
+    patient = result.scalar_one_or_none()
+    if not patient:
+        raise HTTPException(status_code=404, detail="Patient not found")
+    from datetime import datetime
+
+    history = dict(patient.medical_history or {})
+    notes = list(history.get("nursing_notes") or [])
+    notes.insert(0, {"time": datetime.utcnow().isoformat(), "note": body.note})
+    history["nursing_notes"] = notes[:20]
+    patient.medical_history = history
+    await db.commit()
+    await db.refresh(patient)
     return patient
 
 

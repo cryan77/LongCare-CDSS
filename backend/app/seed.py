@@ -251,6 +251,7 @@ async def seed_database() -> None:
             ("doctor@longcare.ca", "Dr. Sarah Chen", "doctor"),
             ("nurse@longcare.ca", "Alex Rivera, RN", "nurse"),
             ("admin@longcare.ca", "System Admin", "admin"),
+            ("patient@longcare.ca", "Jamie Morrison", "patient"),
         ]
         for email, full_name, role in demo_users:
             existing = await db.execute(select(User).where(User.email == email))

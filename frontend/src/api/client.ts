@@ -65,6 +65,10 @@ export const patientsApi = {
   get: (id: number) => api.get<Patient>(`/patients/${id}`).then((r) => r.data),
   createEncounter: (patientId: number, chiefComplaint: string) =>
     api.post('/patients/encounters', { patient_id: patientId, chief_complaint: chiefComplaint }).then((r) => r.data),
+  updateVitals: (patientId: number, vitals: Record<string, unknown>) =>
+    api.patch<Patient>(`/patients/${patientId}/vitals`, vitals).then((r) => r.data),
+  addNursingNote: (patientId: number, note: string) =>
+    api.post<Patient>(`/patients/${patientId}/nursing-notes`, { note }).then((r) => r.data),
 };
 
 export const diagnosisApi = {
@@ -119,4 +123,19 @@ export const imagingApi = {
         headers: { 'Content-Type': 'multipart/form-data' },
       })
       .then((r) => r.data),
+};
+
+export const adminApi = {
+  stats: () => api.get('/admin/stats').then((r) => r.data),
+  users: () =>
+    api
+      .get<{ id: number; email: string; full_name: string; role: string }[]>('/admin/users')
+      .then((r) => r.data),
+  updateRole: (userId: number, role: string) =>
+    api.patch(`/admin/users/${userId}/role`, { role }).then((r) => r.data),
+  aiConfig: () => api.get('/admin/ai-config').then((r) => r.data),
+  updateAiConfig: (payload: Record<string, unknown>) =>
+    api.put('/admin/ai-config', payload).then((r) => r.data),
+  audit: () => api.get<{ events: { time: string; user: string; action: string; patient: string; severity: string }[] }>('/admin/audit').then((r) => r.data),
+  monitoring: () => api.get('/admin/monitoring').then((r) => r.data),
 };

@@ -52,6 +52,22 @@ class PatientResponse(BaseModel):
         from_attributes = True
 
 
+class VitalsUpdate(BaseModel):
+    bp: str | None = None
+    hr: int | None = None
+    temp: float | None = None
+    rr: int | None = None
+    spo2: int | None = None
+    weight_kg: float | None = None
+    height_m: float | None = None
+    pain_score: int | None = None
+    notes: str | None = None
+
+
+class NursingNoteCreate(BaseModel):
+    note: str = Field(min_length=1, max_length=2000)
+
+
 class EncounterCreate(BaseModel):
     patient_id: int
     chief_complaint: str = ""

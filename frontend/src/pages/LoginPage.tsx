@@ -12,6 +12,7 @@ import {
 import { useNavigate } from 'react-router-dom';
 import { authApi } from '../api/client';
 import { useAuthStore } from '../store';
+import { homePathForRole } from '../roles';
 
 export default function LoginPage() {
   const [email, setEmail] = useState('doctor@longcare.ca');
@@ -30,9 +31,9 @@ export default function LoginPage() {
       localStorage.setItem('token', access_token);
       const user = await authApi.me();
       setAuth(access_token, user);
-      navigate('/app/dashboard');
+      navigate(homePathForRole(user.role));
     } catch {
-      setError('Invalid credentials. Try doctor@ / nurse@ / admin@longcare.ca with demo1234');
+      setError('Invalid credentials. Try doctor@ / nurse@ / admin@ / patient@longcare.ca with demo1234');
     } finally {
       setLoading(false);
     }
@@ -114,10 +115,10 @@ export default function LoginPage() {
               gutterBottom
               sx={{ fontFamily: '"Source Serif 4", Georgia, serif', fontSize: '1.75rem' }}
             >
-              Clinician Portal
+              Role-based Portal Access
             </Typography>
             <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-              Sign in to access AI-powered clinical decision support tools.
+              Sign in to your portal — Admin, Doctor, Nurse, or Patient each have a distinct application.
             </Typography>
             {error && (
               <Alert severity="error" sx={{ mb: 2 }}>
@@ -155,7 +156,7 @@ export default function LoginPage() {
               </Button>
             </Box>
             <Alert severity="info" sx={{ mt: 3 }}>
-              Demo: doctor@ / nurse@ / admin@longcare.ca — password demo1234
+              Demo: doctor@ / nurse@ / admin@ / patient@longcare.ca — password demo1234
             </Alert>
           </CardContent>
         </Card>

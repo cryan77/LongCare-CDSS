@@ -4,7 +4,7 @@ from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
-from app.api import auth, chat, diagnosis, documentation, images, patient, treatment
+from app.api import admin, auth, chat, diagnosis, documentation, images, patient, treatment
 from app.config import settings
 from app.database.session import init_db
 from app.llm.gateway import LLMError
@@ -51,6 +51,7 @@ app.include_router(treatment.router, prefix="/api/v1")
 app.include_router(chat.router, prefix="/api/v1")
 app.include_router(documentation.router, prefix="/api/v1")
 app.include_router(images.router, prefix="/api/v1")
+app.include_router(admin.router, prefix="/api/v1")
 
 
 @app.get("/health")
